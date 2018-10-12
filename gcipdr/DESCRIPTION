@@ -1,0 +1,15 @@
+Package: gcipdr
+Type: Package
+Title: Gaussian Copula (based) Individual Person Data (IPD) Reconstruction.
+Version: 0.0  
+Date: 2018-10-05
+Author: Federico Bonofiglio
+Maintainer: Federico Bonofiglio <bono@imbi.uni-freiburg.de>
+Depends: R (>= 3.3.3), JohnsonDistribution, moments, parallel, cubature, ggplot2
+Suggests: lme4
+Description: The proposed Gaussian Copula technique reconstructs (unavailable) original IPD from simple IPD summaries only (IPD empirical marginal moments and correlation matrix). Ultimate focus is recovery of original IPD inferences from the reconstructed IPD. This methods can be useful there where original raw data (IPD), and inferences associated to it, are not available but primarily sought: it is assumed only simple distributional IPD summaries can be recovered as analysis' input data only. Applications are envisioned in fields like Statistical Disclosure Control, Distributed Computing (within infrastructures like DataShield -- see https://cran.datashield.org/), and, provided the required above IPD summaries can be retrieved, Research Synthesis (like meta-analysis) and Reproduction.
+License: GPL (>= 3) 
+URL: https://github.com/bonorico/gcipdr
+Imports: Rcpp (>= 0.12.14)
+LinkingTo: Rcpp, RcppArmadillo
+RoxygenNote: 6.1.0
