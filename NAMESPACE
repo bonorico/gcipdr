@@ -1,0 +1,7 @@
+useDynLib(gcipdr)
+importFrom(Rcpp, evalCpp)
+exportPattern("^[[:alpha:]]+")
+
+
+
+export(DataRebuild)
