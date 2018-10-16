@@ -23,6 +23,16 @@ gcipdr depends on CRAN archived package 'JohnsonDistribution'. You must install 
 
 # ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~   
 
+# Package Description (from DESCRIPTION file)
+
+The proposed Gaussian Copula technique reconstructs (unavailable) original IPD from simple IPD summaries only (IPD empirical marginal moments and correlation matrix). Ultimate focus is recovery of original IPD inferences from the reconstructed IPD. This methods can be useful there where original raw data (IPD), and inferences associated to it, are not available but primarily sought: it is assumed only simple distributional IPD summaries can be recovered as analysis' input data only. Applications are envisioned in fields like Statistical Disclosure Control, Distributed Computing (within infrastructures like DataShield -- see https://cran.datashield.org/), and, provided the required above IPD summaries can be retrieved, Research Synthesis (like meta-analysis) and Reproduction.
+
+# Further Details
+
+This package is a beta version and extensive editing, documenting, and
+amelioration shall be expected in the future.
+
+
 # Installation Notes:
 
 Executing command 'install_github()' above should cause to fresh (re)install LinkingTo packages listed in the DESCRIPTION file (Rcpp, RcppArmadillo). In my case the command also caused to fresh (re)install other dependencies ('cubature' and 'ggplot2') but not all of them. The full list of dependencies ('moment', 'parallel', 'cubature', 'mvtnorm', 'ggplot2') is issued in a warning at installation time. Install any missing dependency manually. 
@@ -48,3 +58,6 @@ WARNING: support for OpenMP requires C++11/C++14; add -std=c++11 or -std=c++14 t
 
 You should be able to just ignore it.
 
+# Help files
+
+After installation type '?Simulate.many.datasets' or '?DataRebuild' in the R command line to obtain more information on gcipdr modules.
