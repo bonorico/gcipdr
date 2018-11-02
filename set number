@@ -1,0 +1,30 @@
+[33m14034f9[m corrections into glmfunc_minimal.R
+[33m8b4dd41[m Update README.md
+[33m0835ca4[m Update README.md
+[33m092e875[m Update README.md
+[33m7ea7102[m Update README.md
+[33md2638af[m Update README.md
+[33m33806be[m adding 'misch_and_warnings.R' locally
+[33mdda8458[m Merge branch 'master' of https://github.com/bonorico/gcipdr
+[33m9e47e0a[m Delete order_minimal.cpp~
+[33m4eb1843[m Delete RcppExports.cpp~
+[33m4670bde[m Delete gcipdr-package.Rd~
+[33mdced682[m Delete order_cppWrapper.R~
+[33m16c2fb5[m Delete ipd_rec.R~
+[33maa7ee8a[m deleting 'misch_and_warnings.R' locally to resolve conflicts with remote
+[33mb8d2c61[m deleting 'dependencies_and_mylibs.R'
+[33mf8cc156[m adding replacement to 'dependencies_and_mylibs.R'
+[33mb940e7a[m Delete dependencies_and_mylibs.R
+[33mbd76d1b[m Delete Read-and-delete-me
+[33m5fc3f52[m Delete NAMESPACE~
+[33m1d9f523[m Delete INDEX~
+[33m5f3ea85[m deleting redundant files
+[33m16c71e5[m adding raw package skeleton
+[33m1800e91[m deleting folder gcipdr: preparing for new fresh upload
+[33mdfd90de[m deleted tar ball
+[33ma3efe62[m Merge pull request #1 from bonorico/try_1
+[33m744ead9[m Uploading package skeleton
+[33m6aca97e[m Uploading package
+[33m64d10a4[m Update README.md
+[33m8862459[m Update README.md
+[33mecb32fd[m Initial commit

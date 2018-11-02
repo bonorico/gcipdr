@@ -141,16 +141,14 @@ dbmom <- function(x, mean, n){
   }
 
 
-##  Johnson system densities (from : http://reference.wolfram.com/language/ref/JohnsonDistribution.html). Replaced: used original definitions from Johnson paper 49
-
+##  Johnson system densities: used original definitions from Johnson paper 49
+## and from https://reference.wolfram.com/language/ref/JohnsonDistribution.html
 
 dJohnsonSB <- function(x, gamma, delta, lambda, csi){
   
 
 y <- (x - csi)/lambda  # conversion  0 < y < 1
 
-# errterm <-  (x - csi)
-  #  errfac <- (-x + csi + lambda)   # y/(1-y) # conversion: should be always positive (if z > 1, something wrong: FORTRAN errors, McLeod comunication) !!!!!
        # safeguard against FORTRAN errors ?
 if ( any(y < 0) | any(y > 1)  ) {
      k <- length(y[y < 0])
@@ -159,25 +157,27 @@ if ( any(y < 0) | any(y > 1)  ) {
      ub <- max(y[y < 1], na.rm = T)
         y[y < 0] <- seq(10e-10, lb, length = k +1)[1:k]
      y[y > 1] <- seq(ub, 0.99999, length = j +1)[2:(j+1)]
-        #   y <- sort(y)
+        
     }
     
     comply <- 1 - y  # complement y        
-kernel <- gamma + delta * log(y/comply)    # z variate    #  log(errterm/errfac)
+   kernel <- gamma + delta * log(y/comply)    # z variate   
 
- dens <- delta*exp(-0.5*kernel^2)    # drop lambda if u use z
+   dens <- delta*exp(-0.5*kernel^2)    
 
-    normalizer <- sqrt(2*pi)*y*comply*lambda    # appearantly Johnson forgot a lambda in the normalizer term         # *errterm*errfac                           
+    normalizer <- sqrt(2*pi)*y*comply*lambda # last lambda term missing in Johnson but not in wolfram
+    
     
     dens/normalizer
     
     }
 
+
 #
 dJohnsonSL <- function(x, gamma, delta, lambda, csi){
 
     y <- (x - csi)/lambda   # y lognormal,  y > 0
-               #errterm <- (x - csi)    # should be always positive !!!!
+
 if (any(y < 0) ) {
      k <- length(y[y < 0])
      lb <- min(y[y > 0], na.rm = T)
@@ -185,11 +185,11 @@ if (any(y < 0) ) {
    y <- sort(y)
    }
     
-    kernel <- gamma + delta* log(y)   # z variate          # log(errterm/lambda)
+    kernel <- gamma + delta* log(y)   # z variate         
 
     dens <- delta*exp(-0.5*kernel^2)
 
-    normalizer <- sqrt(2*pi)*y           #  (x-csi)
+    normalizer <- sqrt(2*pi)*y*lambda  # last lambda term missing in Johnson but not in wolfram        
     
   dens/normalizer
 
@@ -198,57 +198,83 @@ if (any(y < 0) ) {
 #
 dJohnsonSU <- function(x, gamma, delta, lambda, csi){
 
+   ## trans <- function(y) asinh(y) 
 
-## errterm <- (x - csi)/lambda
+  ##   y <- (x - csi)/lambda
     
-##     kernel <- gamma + delta*asinh(errterm)
+  ##   kernel <- gamma + delta*trans(y)
 
-##     dens <- delta*exp(-0.5*kernel^2)
+  ##   dens <- delta*exp(-0.5*kernel^2)
 
-##     a <- (x-csi)^2
-##     b <- lambda^2
+  ##   a <- (x-csi)^2
+  ##   b <- lambda^2
     
-##   normalizer <- sqrt(2*pi)*sqrt(a+b)
+  ## normalizer <- sqrt(2*pi)*sqrt(a+b)
 
-    trans <- function(y) log(x + sqrt(1+y^2) )
+    
+     trans <- function(y) log(y + sqrt(1+y^2) )
     
   y <- (x - csi)/lambda  
     kernel <- gamma + delta*trans(y)   # z variate
     dens <- delta*exp(-0.5*kernel^2)
-    normalizer <- sqrt(2*pi)*sqrt(1+y^2)
+    normalizer <- sqrt(2*pi)*sqrt(1+y^2)*lambda  # last lambda term missing in Johnson
     
     dens/normalizer
     
-}
+  }
 #
+
+
+### deprecated 
 
 dJohnsonZ <- function(x, itype, gamma, delta, lambda, csi){
 
  z <- zJohnsonDistribution(x, itype, gamma, delta, lambda, csi)
 
-    if ( ( itype == 1 | itype ==3 ) & any(z < 0)) {
+  density <- switch(itype,
 
- k <- length(z[z < 0])
-     lb <- min(z[z > 0], na.rm = T)
-        z[z < 0] <- seq(10e-10, lb, length = k +1)[1:k]
-        z <- sort(z)
-
-    }
+      1 ==  delta*exp(-0.5*z^2)/(sqrt(2*pi)*((x-csi)/lambda)),               
+    2 == delta*exp(-0.5*z^2)/(sqrt(2*pi)*sqrt(1+((x-csi)/lambda)^2)*lambda),
+    3 == delta*exp(-0.5*z^2)/(((x-csi)/lambda)*(1-((x-csi)/lambda))*lambda),
+     4 == dnorm(x, lambda, csi)
+                    )
             
-    percentiles <- pnorm(z)
-
-    density <- c(0, diff(percentiles))
-
-    density
+   return( density )
 
    }
 #
 
+
+### DEPRECATED:
+
+## dJohnsonZ <- function(x, itype, gamma, delta, lambda, csi){
+
+##  z <- zJohnsonDistribution(x, itype, gamma, delta, lambda, csi)
+
+##     if ( ( itype == 1 | itype ==3 ) & any(z < 0)) {
+
+##  k <- length(z[z < 0])
+##      lb <- min(z[z > 0], na.rm = T)
+##         z[z < 0] <- seq(10e-10, lb, length = k +1)[1:k]
+##         z <- sort(z)
+
+##     }
+            
+##     percentiles <- pnorm(z)
+
+##     density <- c(0, diff(percentiles))
+
+##     density
+
+##    }
+## #
+
+## value 'indirect' of argument mapping is deprecated
+
+
 dJohnson <- function(x, itype, gamma, delta, lambda, csi, mapping = c("direct", "indirect")){
 
     mapping <- match.arg(mapping)
-
-    # browser()
 
     out <- switch( mapping,
 
