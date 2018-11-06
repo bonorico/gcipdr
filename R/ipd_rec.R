@@ -215,7 +215,7 @@ Return.model.induced.statistics.looped <- function(md, is.data.missing, out.col 
 # un can either have na.omit(md) or na.pass(md) .... handle accordingly ..
 
 Return.key.IPD.summaries <- function( md, corrtype=c("rank.corr", "moment.corr", "normal.corr"),
-                                     only.fixed.stats = FALSE, na.erase = TRUE ){ # set na.erase = F if NAs may insert bias
+                                     only.fixed.stats = FALSE, na.erase = TRUE, compute.jsp = FALSE ){ # set na.erase = F if NAs may insert bias
  
   corrtype <- match.arg(corrtype)
 
@@ -256,13 +256,17 @@ ktx <- apply(md[, -1], 2, kurtosis, na.rm=TRUE) # fourth
 #####################################
 
      moms <- cbind(mx, sdx, skx, ktx) # collect sample moments for NonLinearEquationSystem used in Johnson method
+
+ if (compute.jsp)
     
 jsp <- apply( cbind( moms, x.mode ), 1, function(x){
-        if ( !x[5] )                                # NLES solutions: BEWARE ! u shall avoid computations on binary variables !!!
+        if ( !x[5] )                                
     FitJohnsonDistribution(x[1], x[2], x[3], x[4])
         else
             rep(NA, 6)   }    )
-
+  else
+      jsp <- NULL
+    
         Rx <- Return.correlation.matrix( md[,-1], corrtype)  #  sample correlation matrix
 
   out <- list(  sample.size = n ,
@@ -796,6 +800,7 @@ Generate.with.Complete.correlation <- function(H, n, correlation.matrix, moments
     
     K <- length(mx)
 
+    
         if( K != length(variable.names))
         stop("variable labels do not match the number of variables")
     
@@ -830,7 +835,7 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 #' @param n integer number of independent IPD records. Ex: number of rows (subjects) in original IPD.
 #' @param correlation.matrix pairwise IPD correlations values.
 #' @param moments numeric array of IPD marginal moments up to fourth degree for all IPD variables (columns).
-#' @param johnson.parameters array of Johnson parameters for each IPD marginal variable. Depends on CRAN archived 'JohnsonDistribution' package.
+#' @param johnson.parameters array of Johnson parameters for each IPD marginal variable. Depends on CRAN archived 'JohnsonDistribution' package. If NULL it is computed on given 'moments'.
 #' @param x.mode logical vector: is IPD marginal variable binary (TRUE) or not ?
 #' @param stochastic.integration logical: should Monte Carlo integration be used to resolve Gaussian copula inversion (NORTA transformation)? Default to FALSE, that is numerical integration relying on package 'cubature' is used first. 
 #' @param data.rearrange method of IPD dependence reconstruction based on all pairwise IPD correlations (norta), or on first degree correlations only (incomplete).
@@ -866,7 +871,7 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 #' }
 
 
-DataRebuild <- function( H, n, correlation.matrix, moments, johnson.parameters, x.mode, 
+DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.parameters = NULL,  
                        stochastic.integration = FALSE, data.rearrange = c("incomplete", "norta"),
                         corrtype = c("rank.corr", "moment.corr", "normal.corr"),
                  marg.model = c("gamma", "johnson"), variable.names = NULL, SBjohn.correction = F, compute.eec = F, 
@@ -882,6 +887,19 @@ DataRebuild <- function( H, n, correlation.matrix, moments, johnson.parameters, 
 
     }
 
+ ### get Johnson parameters from empirical moments using Hill AS 99 algorithm
+
+    
+    if (is.null(johnson.parameters) & marg.model == "johnson")
+    
+    johnson.parameters <- apply( cbind( moments, x.mode ), 1, function(x){
+        if ( !x[5] )                                
+    FitJohnsonDistribution(x[1], x[2], x[3], x[4])
+        else
+            rep(NA, 6)   }    )
+
+    #
+    
     if (is.null(correlation.matrix))
     data.rearrange <- "incomplete"  # always if corr matrix is null ALLOW FOR NULL CORR MATRIX (METHOD SET TO INCOMPLETE ALWAYS)
     
@@ -899,7 +917,7 @@ DataRebuild <- function( H, n, correlation.matrix, moments, johnson.parameters, 
         mex <- is.data.similar(Xlist, correlation.matrix, moments, corrtype, tabulate.similar.data ) # boolean
 
 #  output: Space of similar data X, achieved similarity?(T,F)
-    out <- list(Xspace = Xlist, is.similar = mex)  # hypothetical data, and is this data similar to reference ? 
+    out <- list(Xspace = Xlist, is.similar = mex, johns.params = johnson.parameters)  # hypothetical data, and is this data similar to reference ? 
     class(out) <- "similar.data"
   return(  out  ) 
 
@@ -1030,6 +1048,7 @@ if (any(norm3 > 1, na.rm = T))
 #
     md <- Return.IPD.design.matrix(data, fill.missing) # imputation option is decided here  
 
+     
        key.summaries <- Return.key.IPD.summaries( md, corrtype ) # also computed according to fill.missing option
 
      n <- key.summaries$sample.size
@@ -1045,7 +1064,7 @@ if (any(norm3 > 1, na.rm = T))
    if (set.corr.matr2null)
      Rx <- NULL
      
-       data.simulation <- DataRebuild( H, n, Rx, moms, jsp, x.mode, stochastic.integration, data.rearrange, corrtype, marg.model,
+       data.simulation <- DataRebuild( H, n, Rx, moms, x.mode, jsp, stochastic.integration, data.rearrange, corrtype, marg.model,
                                   variable.names, SBjohn.correction, compute.eec, checkdata, tabulate.similar.data ) 
 
             similar.data.space <- data.simulation$Xspace
@@ -1055,7 +1074,12 @@ if (any(norm3 > 1, na.rm = T))
            similar.data = similar.data.space,  # simulated data
           is.data.similar = is.data.statistically.similar, # is data similar to reference ?
          ipd.moments = moms,
-         ipd.johnson.parameters = jsp,
+  ipd.johnson.parameters = {
+  if (is.null(jsp))
+      data.simulation$johns.params
+  else
+      jsp
+},
          re.ordering.method = data.rearrange , # data simulating settings
          marginal.model.distr = marg.model ,               # data simulating settings
          corr.type = corrtype ,                # data simulating settings

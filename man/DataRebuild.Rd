@@ -4,13 +4,13 @@
 \alias{DataRebuild}
 \title{IPD reconstruction from IPD summaries only.}
 \usage{
-DataRebuild(H, n, correlation.matrix, moments, johnson.parameters, x.mode,
-  stochastic.integration = FALSE, data.rearrange = c("incomplete",
-  "norta"), corrtype = c("rank.corr", "moment.corr", "normal.corr"),
-  marg.model = c("gamma", "johnson"), variable.names = NULL,
-  SBjohn.correction = F, compute.eec = F, checkdata = F,
-  tabulate.similar.data = FALSE, multicore.options = list(chunkSize =
-  ceiling(H/(ncores - 1))))
+DataRebuild(H, n, correlation.matrix, moments, x.mode,
+  johnson.parameters = NULL, stochastic.integration = FALSE,
+  data.rearrange = c("incomplete", "norta"), corrtype = c("rank.corr",
+  "moment.corr", "normal.corr"), marg.model = c("gamma", "johnson"),
+  variable.names = NULL, SBjohn.correction = F, compute.eec = F,
+  checkdata = F, tabulate.similar.data = FALSE,
+  multicore.options = list(chunkSize = ceiling(H/(ncores - 1))))
 }
 \arguments{
 \item{H}{integer number of independent IPD replicates to be generated.}
@@ -21,9 +21,9 @@ DataRebuild(H, n, correlation.matrix, moments, johnson.parameters, x.mode,
 
 \item{moments}{numeric array of IPD marginal moments up to fourth degree for all IPD variables (columns).}
 
-\item{johnson.parameters}{array of Johnson parameters for each IPD marginal variable. Depends on CRAN archived 'JohnsonDistribution' package.}
-
 \item{x.mode}{logical vector: is IPD marginal variable binary (TRUE) or not ?}
+
+\item{johnson.parameters}{array of Johnson parameters for each IPD marginal variable. Depends on CRAN archived 'JohnsonDistribution' package. If NULL it is computed on given 'moments'.}
 
 \item{stochastic.integration}{logical: should Monte Carlo integration be used to resolve Gaussian copula inversion (NORTA transformation)? Default to FALSE, that is numerical integration relying on package 'cubature' is used first.}
 
