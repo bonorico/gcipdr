@@ -4,14 +4,14 @@ Gaussian Copula (based) Individual Person Data Reproduction
 # Installation instructions in R (follow in order):
 
 ## step 1: open your R and run command below
-
+```
 library(devtools)
 install_github("bonorico/gcipdr")
-
+```
 # step 2: Important !
 
 gcipdr depends on CRAN archived package 'JohnsonDistribution'. You must install this dependency from source by doing the following:
-
+```
  url <- "https://cran.r-project.org/src/contrib/Archive/JohnsonDistribution/JohnsonDistribution_0.24.tar.gz"
  pkgFile <- "JohnsonDistribution_0.24.tar.gz"
  download.file(url = url, destfile = pkgFile)
@@ -19,7 +19,7 @@ gcipdr depends on CRAN archived package 'JohnsonDistribution'. You must install 
  install.packages(pkgs=pkgFile, type="source", repos=NULL)
 
  unlink(pkgFile)
-
+```
 
 # ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~   
 
@@ -41,12 +41,15 @@ If you want to avoid automatically fresh re-installing any of the above dependen
 
 1) Download all content of the gcipdr repository on your local machine (in a folder called 'gcipdr')
 
-2) From Terminal: cd into 'your_local_directory/gcipdr' and run
-                                                                   R CMD build gcipdr
-3) From R: 
-                            pkg <- "your_local_directory/gcipdr_0.0.tar.gz"
-                            install.packages(pkgs=pkg, type="source", repos=NULL)
+2) From Terminal: cd into 'your_local_directory/gcipdr' and run: 
+                                         
+                                                                  R CMD build gcipdr
+                                                                   
+3) From R:
 
+                                     pkg <- "your_local_directory/gcipdr_0.0.tar.gz"
+                            install.packages(pkgs=pkg, type="source", repos=NULL)
+                          
 4) From R: all remnant dependencies must be installed manually, if yet not installed on your machine.
 
 
@@ -60,4 +63,4 @@ You should be able to just ignore it.
 
 # Help files
 
-After installation type '?Simulate.many.datasets' or '?DataRebuild' in the R command line to obtain more information on gcipdr modules.
+After installation type '?DataRebuild' or '?Simulate.many.datasets' in the R command line to obtain more information on gcipdr modules.
