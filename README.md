@@ -33,6 +33,27 @@ This package is a beta version and extensive editing, documenting, and
 amelioration shall be expected in the future.
 
 
+# HOW TO CITE
+
+Cite this software as follows: 
+
+Bonofiglio Federico. (2018). The gcipdr package version 0.0: Gaussian copula (based) individual person data reproduction. URL: https://github.com/bonorico/gcipdr.
+
+
+Bibtex:
+
+```
+@misc{Bono_github_gcipdr,
+  author = {Bonofiglio, Federico},
+  title = {The {\texttt gcipdr} package Version 0.0: Gaussian Copula (based) Individual Person Data Reproduction},
+  year = {2018},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {URL: https://github.com/bonorico/gcipdr}
+}
+```
+
+
 # Installation Notes:
 
 Executing command 'install_github()' above should cause to fresh (re)install LinkingTo packages listed in the DESCRIPTION file (Rcpp, RcppArmadillo). In my case the command also caused to fresh (re)install other dependencies ('cubature' and 'ggplot2') but not all of them. The full list of dependencies ('moment', 'parallel', 'cubature', 'mvtnorm', 'ggplot2') is issued in a warning at installation time. Install any missing dependency manually. 
