@@ -161,8 +161,11 @@ MCsdINFER <- apply(IPDinferstar.out$coef, 2, sd, na.rm = TRUE)
 
  #### compare inferences !!!!
 
-data.frame( names= c(rep(names,2), "") , est= c(rep("logbeta", length(origbeta)), rep("logsdbeta", length(origbeta)), "aic") , originalIPD = c( origbeta, origsd, origaic), reconstructed = unlist(MCmeanINFER) )
-
+data.frame( names= c(rep(names,2), "") ,
+ est= c(rep("logbeta", length(origbeta)),
+rep("logsdbeta", length(origbeta)), "aic") ,
+originalIPD = c( origbeta, origsd, origaic),
+reconstructed = unlist(MCmeanINFER) )
 
 
 
