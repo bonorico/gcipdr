@@ -110,6 +110,24 @@ is.inf.OR.na <- function( vec  ){
 
 
 
+### add rownames to lower triangular correlation matrix
+
+corrPairByName <- function(stnames){
+
+ cpnamesfull <- unlist(lapply( stnames, function(i) lapply(stnames, function(j){
+
+        paste( i, "-", j, sep = "" )
+
+    }  )) )
+     
+#
+ cpnames <- cpnamesfull[as.vector(lower.tri(matrix( nrow = length(stnames), ncol=length(stnames))))] 
+
+    return( cpnames)
+    
+}
+
+
 
 
 #### function to convert some data columns into multirow latex code to be used within xtable

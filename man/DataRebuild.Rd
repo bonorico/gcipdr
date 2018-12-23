@@ -43,7 +43,11 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{tabulate.similar.data}{if TRUE and also checkdata = TRUE it returns the full tabular comparison between the reconstructed and original IPD summaries.}
 
-\item{multicore.options}{number of cores to be used for parallel computations. Default to 'ncores'. Ex: in your working space pre-define ncore <- 3.}
+\item{multicore.options}{number of cores to be used for parallel
+  computations. Default to 'ncores'. Ex: in your working space
+  pre-define ncore <- 3.}
+
+\item{SI_k}{resampling size of stochastic integration approach.}
 }
 \value{
 An object of class 'similar.data'.
