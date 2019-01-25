@@ -9,8 +9,7 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
   data.rearrange = c("incomplete", "norta"), corrtype = c("rank.corr",
   "moment.corr", "normal.corr"), marg.model = c("gamma", "johnson"),
   variable.names = NULL, SBjohn.correction = F, compute.eec = F,
-  checkdata = F, tabulate.similar.data = FALSE,
-  multicore.options = list(chunkSize = ceiling(H/(ncores - 1))))
+  checkdata = F, tabulate.similar.data = FALSE)
 }
 \arguments{
 \item{H}{integer number of independent IPD replicates to be generated.}
@@ -43,7 +42,6 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{tabulate.similar.data}{if TRUE and also checkdata = TRUE it returns the full tabular comparison between the reconstructed and original IPD summaries.}
 
-\item{multicore.options}{number of cores to be used for parallel computations. Default to 'ncores'. Ex: in your working space pre-define ncore <- 3.}
 }
 \value{
 An object of class 'similar.data'.
