@@ -25,7 +25,7 @@ gcipdr depends on CRAN archived package 'JohnsonDistribution'. You must install 
 
 # Package Description (from DESCRIPTION file)
 
-The proposed Gaussian Copula technique reconstructs (unavailable) original IPD from simple IPD summaries only (IPD empirical marginal moments and correlation matrix). Ultimate focus is recovery of original IPD inferences from the reconstructed IPD. This methods can be useful there where original raw data (IPD), and inferences associated to it, are not available but primarily sought: it is assumed only simple distributional IPD summaries can be recovered as analysis' input data only. Applications are envisioned in fields like Statistical Disclosure Control, Distributed Computing (within infrastructures like DataShield -- see https://cran.datashield.org/), and, provided the required above IPD summaries can be retrieved, Research Synthesis (like meta-analysis) and Reproduction.
+The proposed Gaussian Copula technique generates (unavailable) IPD from simple IPD summaries (like empirical marginal moments and correlation matrix). Ultimate focus is recovery of IPD inferences from the generated data.  Applications are envisioned in fields like Statistical Disclosure Control, Distributed Computing (within infrastructures like DataShield -- see https://cran.datashield.org/), and, provided the required IPD summaries can be retrieved, Research Synthesis (ideally like meta-analysis) and Reproduction.
 
 # Further Details
 
