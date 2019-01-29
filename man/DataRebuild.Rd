@@ -50,10 +50,16 @@ An object of class 'similar.data'.
 `DataRebuild()` generates stochastic copies of the original IPD by taking empirical IPD distributional summaries as input data only.
 }
 \details{
-`DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. If data.rearrange = "norta" is chosen it would mostly make sense to use corrtype = "moment.corr". This program relies on archived package 'JohnsonDistribution', that is one of the few (if not the only) available R code that obtain rather stable solutions for the Johnson system based on the Hill algorithm. Some minimal issues though exist: the SB type distribution (positive reals support) can wrongly sample some negative values. This can be problematic if the marginal is later constrained to be positive (log transformation ?). Then SBjohn.correction = TRUE sets negative values equal to the minimum positive value generated (see function 'rJohn' in source code). This could slightly alter moment features. Hence if no later constraints on the marginal are needed it is better to avoid any correction.
+`DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. If data.rearrange = "norta" is chosen it would mostly make sense to use corrtype = "moment.corr". If inversion fails with numerical integration (default), try stochastic integration (stochastic.integration = TRUE) instead. 
 }
 \section{Note}{
- this program currently assumes the input IPD summaries arise from a specific IPD format where a categorical variable with \eqn{m} levels is converted to \eqn{m-1} dummy (binary) variables previous to IPD summary computation. This underlies the simplification made in modelling of the IPD marginals, where the program currently only distinguished between a binary and a non binary type. The latter is approximated by a continuous distribution (either Gamma or Johnson) depending on the amount of marginal moment (respectively either up to second or fourth degree). This particular approach does not need to be restrictive. For instance, in future versions one can adapt the code to allow for categorical marginals as well. For such marginals the preferred modeling choice would intuitively be the Multinomial distribution.
+ this program currently assumes that previous to calculation of the
+ input IPD summaries every IPD categorical variable with \eqn{m} levels
+ was first
+ converted to \eqn{m-1} dummy (binary) variables. As an alternative one
+ can, in the future, allow for
+ categorical marginals as well and use a Multinomial distribution
+ modeling. This program relies on archived package 'JohnsonDistribution'.
 }
 
 \examples{
