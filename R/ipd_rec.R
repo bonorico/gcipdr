@@ -18,9 +18,6 @@
 
 
 
-#### TODO (24/01/19) delete argument 'multicore.options' and related (e.g. ncores). 
-
-
 ## IPD reconstruction using NORTA.
 ## Comparisons with original IPD: IPD summary statistics are directly computed on design matrix of (in principle unavailable) IPD example. 
  ## IPD summaries can otherwise be directly piped to function 'DataRebuild' that is core module of IPD reconstruction.
@@ -362,7 +359,7 @@ rJohn <- function( z, jp1, jp2, jp3, jp4, jp5, SBjohn.correction = F){  # also w
 ##
 
 
-johnson.method <- function( H, n, mx, jsp , x.mode, SBjohn.correction = F, multicore.options = list(chunkSize = ceiling(H/(ncores-1)) ) ){
+johnson.method <- function( H, n, mx, jsp , x.mode, SBjohn.correction = F){
 
      if (x.mode)
     replicate(H, rbinom(n, 1, mx) )
@@ -375,14 +372,14 @@ johnson.method <- function( H, n, mx, jsp , x.mode, SBjohn.correction = F, multi
 # looped over number of variables. So many variables as lenght of mx (sdx, and x.mode) 
 
 johnson.method.looped <- function( H, n, mx, jsp ,  
-                                  x.mode, SBjohn.correction = F, multicore.options = list(chunkSize = ceiling(H/(ncores-1)) ) ){
+                                  x.mode, SBjohn.correction = F){
     K <- length(mx)
     if ( K != length(x.mode) )
         stop( "mx and x.mode must have all equal length" )
     
 out <- lapply( 1:K,
          function(j) johnson.method( H, n, mx[j], jsp[ ,j] , x.mode[j],  # jsp is a matrix now
-                                          SBjohn.correction, multicore.options )  
+                                          SBjohn.correction )  
               )  
  out
     
@@ -524,8 +521,7 @@ permutation.search <- function(H, variables.list, reference.corr.vec, variable.n
 
 Generate.with.Incomplete.correlation <- function(H, n, correlation.matrix, moments, johnson.parameters, x.mode,
                      variable.names, SBjohn.correction = F, compute.eec = F, corrtype=c("rank.corr", "moment.corr"),
-                 marg.model=c("gamma", "johnson"),                                     
-                      multicore.options = list(chunkSize = ceiling(H/(ncores-1)) ) ){  
+                 marg.model=c("gamma", "johnson") ){  
 
     corrtype <- match.arg(corrtype)
     marg.model <- match.arg(marg.model)
@@ -545,7 +541,7 @@ Generate.with.Incomplete.correlation <- function(H, n, correlation.matrix, momen
                        
    gamma = gamma.method.looped( H, n,  mx, sdx, x.mode ), 
 
- johnson = johnson.method.looped( H, n, mx, johnson.parameters, x.mode, SBjohn.correction, multicore.options )   )
+ johnson = johnson.method.looped( H, n, mx, johnson.parameters, x.mode, SBjohn.correction )   )
 
     
   if (K > 1) { # if there is more than 1 variable apply permutation search (always the case under convention) ...
@@ -858,7 +854,6 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 #'
 #' @param tabulate.similar.data if TRUE and also checkdata = TRUE it returns the full tabular comparison between the reconstructed and original IPD summaries.
 #' 
-#' @param multicore.options number of cores to be used for parallel computations. Default to 'ncores'. Ex: in your working space pre-define ncore <- 3.
 #' 
 #' @param SI_k resampling size of stochastic integration approach. Default to 8000.
 #'
@@ -885,7 +880,7 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
                        stochastic.integration = FALSE, data.rearrange = c("incomplete", "norta"),
                         corrtype = c("rank.corr", "moment.corr", "normal.corr"),
                  marg.model = c("gamma", "johnson"), variable.names = NULL, SBjohn.correction = F, compute.eec = F, 
-                  checkdata = F, tabulate.similar.data =  FALSE, multicore.options = list(chunkSize = ceiling(H/(ncores-1)) ), SI_k = 8000, input.sn.corr = NULL){ 
+                  checkdata = F, tabulate.similar.data =  FALSE, SI_k = 8000, input.sn.corr = NULL){ 
 
                       data.rearrange <- match.arg(data.rearrange)
     corrtype <- match.arg(corrtype)
@@ -917,7 +912,7 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
 
  incomplete= Generate.with.Incomplete.correlation( H, n,  correlation.matrix, moments,
                                     johnson.parameters, x.mode, variable.names, SBjohn.correction, compute.eec,
-                                    corrtype, marg.model, multicore.options ),
+                                    corrtype, marg.model ),
 
       norta= Generate.with.Complete.correlation( H, n,  correlation.matrix, moments,
                                     johnson.parameters, stochastic.integration, x.mode, variable.names, SBjohn.correction,
