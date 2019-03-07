@@ -25,12 +25,7 @@ amelioration shall be expected in the future.
 }
 \examples{
 
-ncores <- detectCores()  # parallel computing set-up
-# this name is used as default to set clusters below ....
-
-cl <- makeCluster(ncores-1, type="FORK")  
-
-
+# eventually set global parallelization options with 'options(mc.cores='your numebr of cores')'
 
 ##### LEVEL 1: RAW DATA HOLDER (RDH) COMPUTES IPD SUMMARY AND DISCLOSE IT
 
