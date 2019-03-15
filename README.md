@@ -26,6 +26,7 @@ gcipdr depends on CRAN archived package 'JohnsonDistribution'. You must install 
 ```
 help("gcipdr")
 ```
+
 # ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~   
 
 # Package Description (from DESCRIPTION file)
