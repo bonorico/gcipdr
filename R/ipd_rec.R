@@ -211,7 +211,7 @@ Return.model.induced.statistics.looped <- function(md, is.data.missing, out.col 
 
 # un can either have na.omit(md) or na.pass(md) .... handle accordingly ..
 
-Return.key.IPD.summaries <- function( md, corrtype=c("rank.corr", "moment.corr", "normal.corr"),
+Return.key.IPD.summaries <- function( md, corrtype=c("moment.corr", "rank.corr", "normal.corr"),
                                      only.fixed.stats = FALSE, na.erase = TRUE, compute.jsp = FALSE ){ # set na.erase = F if NAs may insert bias
  
   corrtype <- match.arg(corrtype)
@@ -877,8 +877,8 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 
 
 DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.parameters = NULL,  
-                       stochastic.integration = FALSE, data.rearrange = c("incomplete", "norta"),
-                        corrtype = c("rank.corr", "moment.corr", "normal.corr"),
+                       stochastic.integration = FALSE, data.rearrange = c("norta", "incomplete"),
+                        corrtype = c("moment.corr", "rank.corr", "normal.corr"),
                  marg.model = c("gamma", "johnson"), variable.names = NULL, SBjohn.correction = F, compute.eec = F, 
                   checkdata = F, tabulate.similar.data =  FALSE, SI_k = 8000, input.sn.corr = NULL){ 
 

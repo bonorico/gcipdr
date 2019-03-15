@@ -29,10 +29,10 @@
 ## unlink(pkgFile)
 
 
-warning("This package depends on CRAN archived package 'JohnsonDistribution'. Please manually download this dependency from: https://cran.r-project.org/src/contrib/Archive/JohnsonDistribution/JohnsonDistribution_0.24.tar.gz")
+ warning("This package depends on CRAN archived package 'JohnsonDistribution'. Please manually download this dependency from: https://cran.r-project.org/src/contrib/Archive/JohnsonDistribution/JohnsonDistribution_0.24.tar.gz")
 
 
-warning("Other dependecies: moments, parallel, cubature, mvtnorm, ggplot2")
+# warning("Other dependecies: moments, parallel, cubature, mvtnorm, ggplot2")
 
 
 
@@ -172,5 +172,56 @@ label[first] <-
   df[, cols] <- newcols
   return( df )
     
+
+}
+
+
+
+#####  ## scatterplot function with linear and loess | lowess regression
+
+
+panel.fit <- function(x,y){
+    b <- lm(y~x)$coef
+    pred <- b[1] + b[2]*x
+   points(x,y, pch = ".")
+lines(lowess(x,y), col= 'blue', lty = 4, lwd = 2)
+    lines(x, pred , col='red', lwd = 2)
+   
+    
+}
+
+                                        #
+
+panel.fit2 <- function(x,y){
+    b <- lm(y~x)$coef
+    pred <- b[1] + b[2]*x
+   points(x,y, pch = ".")
+lines(x[order(x)], loess(y~x)$fitted[order(x)], col= 'blue', lty = 4, lwd = 2)
+    lines(x, pred , col='red', lwd = 2)
+   
+    
+}
+
+#
+
+panel.cor <- function(x,y){
+
+    r <- cor(x,y)
+
+    legend("center", paste(round(r,2)), bty = "n")
+    
+  }
+
+
+                                        #
+
+scatter <- function(dat2, smooth = c("loess", "lowess"), text = NULL){
+
+    smooth <- match.arg(smooth)
+    
+pairs(dat2, upper.panel = panel.cor, lower.panel =switch(smooth,
+                             "lowess" = panel.fit,                            
+                           "loess" = panel.fit2 ), main = text )
+
 
 }
