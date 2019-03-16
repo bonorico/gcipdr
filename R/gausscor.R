@@ -122,7 +122,8 @@ Sigmaz <- diag(2); Sigmaz[1,2] <- Sigmaz[2,1] <- rz
 
 
 
-# rewrite bivariate density without matrix notation
+                                        # rewrite bivariate density without matrix notation
+# TODO: see vignette("cubature"), example 'Double Gaussian', for possible performance improvements via vectorization ? 
 
     bndens <- function(z, rz){
 
@@ -215,11 +216,11 @@ covx1x2prime <- function(z, Gx1, Gx2,..., rz, pNorm){
 
 
 covx1x2dist <- function(rz, rx, Gx1, Gx2,..., meanx=c(0,0), sdx=c(1,1),
-                        lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2)){  # K is defunct here only needed to to avoind arg conflicts with mc integration
+                        lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2), NI_tol = 1e-05, NI_maxEval = 20){  # K is defunct here only needed to to avoind arg conflicts with mc integration
       if ( abs(rz)==1 )  
                rz <- sign(rz)*0.99  # at rz=pm 1 integral is degenerate and loopspins 
 
-res <- adaptIntegrate(covx1x2, lowlims, uplims, Gx1=Gx1,   
+res <- adaptIntegrate(covx1x2, lowlims, uplims, tol = NI_tol, maxEval = NI_maxEval, Gx1=Gx1,   
                      Gx2=Gx2, rz=rz, pNorm=pNorm )
 
 
@@ -232,14 +233,15 @@ res <- adaptIntegrate(covx1x2, lowlims, uplims, Gx1=Gx1,
 
 # first derivative of dist func ...
 
-covx1x2distprime <- function(rz, rx, Gx1, Gx2,..., sdx=c(1,1), lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2)){
+covx1x2distprime <- function(rz, rx, Gx1, Gx2,..., sdx=c(1,1), lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2), NI_tol = 1e-05, NI_maxEval = 20){
 
       if(abs(rz)==1)
                rz <- sign(rz)*0.99  # at rz=pm 1 integral is degenerate and loopspins
 
     
-res <- adaptIntegrate(covx1x2prime, lowlims, uplims, Gx1=Gx1,   
-                     Gx2=Gx2, rz=rz, pNorm=pNorm)
+res <- adaptIntegrate(covx1x2prime, lowlims, uplims, tol = NI_tol, maxEval = NI_maxEval, Gx1=Gx1,   
+                      Gx2=Gx2, rz=rz, pNorm=pNorm)
+    
 
     res$integral*(1/prod(sdx))
 
@@ -250,12 +252,12 @@ res <- adaptIntegrate(covx1x2prime, lowlims, uplims, Gx1=Gx1,
 ###  compute double expectation projected in normal space (INS), and norm between observed/projected correlation, numerically or stochastically .... ACTUALLY this is correlation no tdouble expectatoin ...
 
 Compute.double.expectation.INS <- function( rz, rx, Gx1, Gx2,..., meanx=c(0,0), sdx=c(1,1), stoch = FALSE,
-                                           lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2), K=NULL ){
+                                           lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2), K=NULL, NI_tol = 1e-05, NI_maxEval = 20 ){
 
     if ( stoch ) 
        out <- mccovx1x2( rz, Gx1, Gx2, rx = rx, meanx = meanx, sdx = sdx, pNorm = pNorm, K = K )
        else 
-                out <- covx1x2dist( rz, rx, Gx1, Gx2, meanx = meanx, sdx = sdx, lowlims = lowlims, uplims = uplims, pNorm = pNorm )
+                out <- covx1x2dist( rz, rx, Gx1, Gx2, meanx = meanx, sdx = sdx, lowlims = lowlims, uplims = uplims, pNorm = pNorm, NI_tol = NI_tol, NI_maxEval = NI_maxEval )
    
     
   return(out)
@@ -265,12 +267,12 @@ Compute.double.expectation.INS <- function( rz, rx, Gx1, Gx2,..., meanx=c(0,0), 
 #
 
 Compute.double.expectation.prime.INS <- function( rz, rx, Gx1, Gx2,..., sdx=c(1,1), stoch = FALSE,
-                                                 lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2), K=NULL ){
+                                                 lowlims= c(-5,-5), uplims=c(5,5), pNorm=rep(TRUE,2), K=NULL, NI_tol = 1e-05, NI_maxEval = 20 ){
 
     if ( stoch )
         out <- mccovx1x2prime( rz, Gx1, Gx2, rx = rx, sdx = sdx, pNorm = pNorm, K = K )
     else
-        out <- covx1x2distprime( rz, rx, Gx1, Gx2, sdx = sdx, lowlims = lowlims, uplims = uplims, pNorm = pNorm )
+        out <- covx1x2distprime( rz, rx, Gx1, Gx2, sdx = sdx, lowlims = lowlims, uplims = uplims, pNorm = pNorm, NI_tol = NI_tol, NI_maxEval = NI_maxEval )
 
   return(out)
 
@@ -296,7 +298,7 @@ check.rz.bounds <- function(rz, ...){
 # AGAIN: problem of spilling search likely arises when, for given marginals, correlation in standard space is already close to the extremal. In that case, we may observe spilling, or singularities.
 
 check.rz.bounds2 <- function( rz, rx, Gx1, Gx2,..., meanx, sdx, stoch, 
-                        lowlims, uplims, pNorm, K ){  # if corr spill over natural boundary, space boundary is likely a cul de sac already. E.g. derivative may already quickly converge to 0 for 0.99, sending newtrap into a loop. By safechecking, better offer a small array of options on boundary, say 0.7 to 0.99 by 10, and pick the boundary value yielding minimal distance (this should also protect from the derivative freezing on a stationary point)
+                        lowlims, uplims, pNorm, K, NI_tol, NI_maxEval ){  # if corr spill over natural boundary, space boundary is likely a cul de sac already. E.g. derivative may already quickly converge to 0 for 0.99, sending newtrap into a loop. By safechecking, better offer a small array of options on boundary, say 0.7 to 0.99 by 10, and pick the boundary value yielding minimal distance (this should also protect from the derivative freezing on a stationary point)
     
      modified <- FALSE
     break.loop <- FALSE
@@ -308,7 +310,7 @@ check.rz.bounds2 <- function( rz, rx, Gx1, Gx2,..., meanx, sdx, stoch,
         rz.grid <- sign(rz)*seq(0.735, 0.99, length = 10)  # BEWARE sign
 
         inits <- sapply( rz.grid, function(x) Compute.double.expectation.INS(x, rx, Gx1, Gx2, meanx = meanx, sdx = sdx,
-                        stoch = stoch, lowlims = lowlims, uplims = uplims, pNorm = pNorm, K = K ) )  
+                        stoch = stoch, lowlims = lowlims, uplims = uplims, pNorm = pNorm, K = K, NI_tol = NI_tol, NI_maxEval = NI_maxEval ) )  
 
     init <- min( abs(inits), na.rm = T)
 
@@ -317,7 +319,7 @@ check.rz.bounds2 <- function( rz, rx, Gx1, Gx2,..., meanx, sdx, stoch,
                 modified <- TRUE  # value has been modified ....  ifelse( rz == 0.99, 0.9, rz - ( rz - round(rz,2)) )
         # if derivative already approaching saddle point on unity bordet (pm 0.9) order breaking loop and return border value with smallest norm ...
   flat.point <- Compute.double.expectation.prime.INS( sign(rz)*0.9, rx, Gx1, Gx2, sdx = sdx, stoch = stoch,  
-                         lowlims = lowlims, uplims = uplims, pNorm = pNorm, K = K) 
+                         lowlims = lowlims, uplims = uplims, pNorm = pNorm, K = K, NI_tol = NI_tol, NI_maxEval = NI_maxEval) 
 
    if (  abs(flat.point) < 0.01 ) # if yes, flag out with breaking command for external loop in newton-raphson search (newtrap) ....    
   break.loop <- TRUE                 
@@ -485,7 +487,7 @@ make.matrix.SPD <- function( mat, flag ){
     if (!is.square.matrix(mat) | !is.square.matrix(flag))
   stop( "arguments must be square matrices" )
 
-    warning("make.matrix.SPD was invoked: correlation matrix conversion failed")
+    warning("make.matrix.SPD was invoked: correlation matrix conversion failed. Suggestions: if you used numerical integration try decreasing 'NI_tol' (just a little) and/or increasing 'NI_maxEval'. If you used stochastic integration, try increasing SI_k")
     p <- dim(mat)[1]
  vec <- as.numeric(mat) 
   bool <- as.logical(flag)
@@ -511,12 +513,12 @@ make.matrix.SPD <- function( mat, flag ){
 
 ## guess init (DEPRECATED)
 
-guess.rz.init <- function( rxj, g1, g2, mxj, sxj, pnrm, lowlims = c(-5, -5), uplims = c(5, 5), stoch=FALSE, K = 1000 ){
+guess.rz.init <- function( rxj, g1, g2, mxj, sxj, pnrm, lowlims = c(-5, -5), uplims = c(5, 5), stoch=FALSE, K = 1000, NI_tol = 1e-05, NI_maxEval = 20 ){
     
     grid <- seq( sign(rxj)*0.01, sign(rxj)*0.99, length = 100 )
 
  inits <- sapply( grid, function(x) Compute.double.expectation.INS(x), rx = rxj, Gx1 = g1, Gx2 = g2, meanx = mxj, sdx = sxj, stoch = stoch,
-                 lowlims = lowlims, uplims = uplims, pNorm = pnrm, K = K )   
+                 lowlims = lowlims, uplims = uplims, pNorm = pnrm, K = K, NI_tol = NI_tol, NI_maxEval = NI_maxEval )   
 
     init <- min( abs(inits), na.rm = T)
 
@@ -529,7 +531,7 @@ guess.rz.init <- function( rxj, g1, g2, mxj, sxj, pnrm, lowlims = c(-5, -5), upl
 ## conversion of Rx into standard normal space corresponding matrix, Rz
 # FINISH: introduce stoch argument and integral option everywhere
 
-First.attempt.Rx_Rz.conversion <- function(Rx, marginals, means, sds, stoch=FALSE, lows=c(-5,-5), ups=c(5,5), pNorm=NULL, K=1000){
+First.attempt.Rx_Rz.conversion <- function(Rx, marginals, means, sds, stoch=FALSE, lows=c(-5,-5), ups=c(5,5), pNorm=NULL, K=1000, NI_tol = 1e-05, NI_maxEval = 20){
 # Rx : corr matrix of X; marginals list of marginal inverse CDFs (quantile yelders)
            
    p <- length(marginals)    
@@ -558,10 +560,10 @@ First.attempt.Rx_Rz.conversion <- function(Rx, marginals, means, sds, stoch=FALS
    pnrm <- pNorm[c(row,col)]
 
  out <- newtrap( Compute.double.expectation.INS, Compute.double.expectation.prime.INS,
-          rxj, Gx1= g1, Gx2= g2, rx= rxj, meanx=mxj, sdx=sxj, stoch = stoch, lowlims=lows, uplims=ups, pNorm=pnrm, K=K, safecheck = check.rz.bounds2)[[1]]   # WRONG safecheck cannot take stoch arg here... FINISH  
+          rxj, Gx1= g1, Gx2= g2, rx= rxj, meanx=mxj, sdx=sxj, stoch = stoch, lowlims=lows, uplims=ups, pNorm=pnrm, K=K, NI_tol = NI_tol, NI_maxEval = NI_maxEval, safecheck = check.rz.bounds2)[[1]]   # WRONG safecheck cannot take stoch arg here... FINISH  
 
       if(sign(out)!=sign(rxj))
-       warning("sign of corrz different from that of corrx !!!", call.=F)
+       warning("sign of copula pair correlation different from entry value !!!", call.=F)
     
       out
     }           )  
@@ -576,9 +578,9 @@ res.bool <- make.square.matrix( unlist(lapply(Rut, function(x) attr(x, "adjusted
                                         # Rz. FAILURE WARNING. if Rz is not semi-positive definite (e.g. is indefinite) the successive NORTA method may (will) fail (Gosh 01). In such case Gosh proposes to find the closest matrix S wich is semi-definite positive. This is a minimization task f(S-Rz) relative to S, where f is a linear operator. Approaches to solve these systems are "semidefinite programs" (see wiki: https://en.wikipedia.org/wiki/Semidefinite_programming). There is a R package here : https://cran.r-project.org/web/packages/Rcsdp/Rcsdp.pdf.
 
 
- Rx.to.Rz.conv <- function(Rx, marginals, means, sds, stoch=FALSE, lows=c(-5,-5), ups=c(5,5), pNorm=NULL, K=1000){
+ Rx.to.Rz.conv <- function(Rx, marginals, means, sds, stoch=FALSE, lows=c(-5,-5), ups=c(5,5), pNorm=NULL, K=1000, NI_tol = 1e-05, NI_maxEval = 20){
      
-  first.try <- First.attempt.Rx_Rz.conversion(Rx, marginals, means, sds, stoch, lows, ups, pNorm, K)
+  first.try <- First.attempt.Rx_Rz.conversion(Rx, marginals, means, sds, stoch, lows, ups, pNorm, K, NI_tol, NI_maxEval)
 
    if ( is.SPD.matrix(first.try$matrix) )    
    return(first.try$matrix)
@@ -592,9 +594,12 @@ res.bool <- make.square.matrix( unlist(lapply(Rut, function(x) attr(x, "adjusted
 
 kruskalconv <- function(X) 2*sin(pi/6*X)
 
-#
+
+
+# this function goes into file 'ipd_rec.R'
+
 convertRx <- function(Rx, marginals=NULL, means=NULL, sds=NULL, stoch=FALSE, 
-                      lows=c(-5,-5), ups=c(5,5), pNorm=NULL, corrtype=c("moment", "rank"), K=1000){
+                      lows=c(-5,-5), ups=c(5,5), pNorm=NULL, corrtype=c("moment", "rank"), K=1000, NI_tol = 1e-05, NI_maxEval = 20){
 
     corrtype <- match.arg(corrtype)
 
@@ -602,7 +607,7 @@ convertRx <- function(Rx, marginals=NULL, means=NULL, sds=NULL, stoch=FALSE,
 
   Rz <- switch(corrtype,
 
-    moment= Rx.to.Rz.conv(Rx, marginals, means, sds, mc.stoch, lows, ups, pNorm, K)  , # also use mom in case rank need numerical search ...**
+    moment= Rx.to.Rz.conv(Rx, marginals, means, sds, mc.stoch, lows, ups, pNorm, K, NI_tol, NI_maxEval)  , # also use mom in case rank need numerical search ...**
 
     rank= kruskalconv(Rx)
 
@@ -772,3 +777,4 @@ standBivNprime <- function(z, rz){
 
 
 
+ 

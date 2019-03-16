@@ -651,7 +651,7 @@ johnson.quintiles.looped <- function( mx, sdx, jsp, n, x.mode,
 
 NORTAconvert.correlation.matrix <- function(correlation.matrix , marginal.inverse.distributions,
                                             first.moments, second.moments, stochastic.integration, yes.normal.percentile,
-                      corr.type=c("rank.corr", "moment.corr", "normal.corr"), SI_k = 8000){
+                      corr.type=c("rank.corr", "moment.corr", "normal.corr"), SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20){
 corr.type <- match.arg(corr.type)
 
    if (corr.type == "normal.corr")
@@ -672,7 +672,7 @@ corr.type <- match.arg(corr.type)
   "moment.corr" = {
 
 convertRx( correlation.matrix , marginal.inverse.distributions, first.moments, second.moments,   
-          stoch = stochastic.integration, pNorm = yes.normal.percentile, K = SI_k )  # TODO(me): set K as formal argument or tweak here ....
+          stoch = stochastic.integration, pNorm = yes.normal.percentile, K = SI_k, NI_tol = NI_tol, NI_maxEval = NI_maxEval )  # TODO(me): set K as formal argument or tweak here ....
   } ,
  
   "rank.corr" =  convertRx( correlation.matrix , corrtype="rank")  )
@@ -745,7 +745,7 @@ rNORTA.looped <- function(simulation.size, sample.size, L, yes.normal.percentile
 norta.method <- function( simulation.size, sample.size, correlation.matrix,
                          first.moments, second.moments, stochastic.integration, yes.normal.percentile,
                           marginal.inverse.distributions, variable.names, 
-                         corr.type=c("rank.corr", "moment.corr", "normal.corr"), SI_k = 8000, input.sn.corr = NULL){
+                         corr.type=c("rank.corr", "moment.corr", "normal.corr"), SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20, input.sn.corr = NULL){
 
 corr.type <- match.arg(corr.type)
 
@@ -763,7 +763,7 @@ if ( any( eigen(correlation.matrix, T,T)$values < 0 )  )   # empirically observe
     else
    correlation.in.standard.normal.space <- NORTAconvert.correlation.matrix( correlation.matrix,
 
-     marginal.inverse.distributions ,first.moments, second.moments, stochastic.integration, yes.normal.percentile, corr.type, SI_k)
+     marginal.inverse.distributions ,first.moments, second.moments, stochastic.integration, yes.normal.percentile, corr.type, SI_k, NI_tol, NI_maxEval)
        }else
        correlation.in.standard.normal.space <- input.sn.corr # adding option to externally tweak copula paramenter
 #
@@ -786,7 +786,7 @@ L <- t(U)
 
 Generate.with.Complete.correlation <- function(H, n, correlation.matrix, moments, johnson.parameters, stochastic.integration, x.mode,
                        variable.names, SBjohn.correction = F, corrtype=c("rank.corr", "moment.corr", "normal.corr"),
-                 marg.model=c("gamma", "johnson"), SI_k = 8000, input.sn.corr = NULL){  
+                 marg.model=c("gamma", "johnson"), SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20, input.sn.corr = NULL){  
 
     corrtype <- match.arg(corrtype)
     marg.model <- match.arg(marg.model)
@@ -820,7 +820,7 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
     else
         norm.perc <- x.mode | (1-x.mode) # else always true 
     
-    res <- norta.method( H, n, correlation.matrix, mx, nortasd, stochastic.integration, norm.perc, marginals, variable.names, corrtype, SI_k, input.sn.corr )
+    res <- norta.method( H, n, correlation.matrix, mx, nortasd, stochastic.integration, norm.perc, marginals, variable.names, corrtype, SI_k, NI_tol, NI_maxEval, input.sn.corr )
 
   return( list( artificial.data = res$copula.inverse, copula.params = res$copula.params  ) )
        
@@ -857,6 +857,10 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 #' 
 #' @param SI_k resampling size of stochastic integration approach. Default to 8000.
 #'
+#' @param NI_tol error tolerance for numerical integration. Default 1e-02, do not decrease too much. As reasonable max value use 1e-05.
+#'
+#' @param NI_maxEval max number of evaluations during numerical integration. Default 500 (instead 0 implies infinite number of evaluations).
+#'
 #' @param input.sn.corr solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally via optimization. If matrix solution is instead given, it overrides internal optimization and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning. See Details.
 #'
 #' @return An object of class 'similar.data'.
@@ -880,7 +884,7 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
                        stochastic.integration = FALSE, data.rearrange = c("norta", "incomplete"),
                         corrtype = c("moment.corr", "rank.corr", "normal.corr"),
                  marg.model = c("gamma", "johnson"), variable.names = NULL, SBjohn.correction = F, compute.eec = F, 
-                  checkdata = F, tabulate.similar.data =  FALSE, SI_k = 8000, input.sn.corr = NULL){ 
+                  checkdata = F, tabulate.similar.data =  FALSE, SI_k = 8000, NI_tol = 1e-02, NI_maxEval = 500, input.sn.corr = NULL){ 
 
                       data.rearrange <- match.arg(data.rearrange)
     corrtype <- match.arg(corrtype)
@@ -916,7 +920,7 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
 
       norta= Generate.with.Complete.correlation( H, n,  correlation.matrix, moments,
                                     johnson.parameters, stochastic.integration, x.mode, variable.names, SBjohn.correction,
-                                    corrtype, marg.model, SI_k, input.sn.corr )   )                                          
+                                    corrtype, marg.model, SI_k, NI_tol, NI_maxEval, input.sn.corr )   )                                          
   mex <- NA
  if (checkdata) 
         mex <- is.data.similar(Xlist$artificial.data, correlation.matrix, moments, corrtype, tabulate.similar.data ) # boolean 
@@ -1055,7 +1059,7 @@ moms4 <- data.frame( ipd = moments[ ,4] , mc.mean = fourth.moment.mc.average, di
 
  Simulate.data.given.IPD <- function( data, H = NULL, method, fill.missing = F,  # TODO(me) : u may want to set fill.missing = TRUE later to ensure maximal generality
                 SBjohn.correction = F, stochastic.integration = F, checkdata = F, compute.eec = F, 
-                tabulate.similar.data =  FALSE, print.message = TRUE, set.corr.matr2null = FALSE, SI_k = 8000, input.sn.corr = NULL){
+                tabulate.similar.data =  FALSE, print.message = TRUE, set.corr.matr2null = FALSE, SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20, input.sn.corr = NULL){
        
              method.settings.combo <-  setting.comb.matrix()  # see below ..
       
@@ -1082,7 +1086,7 @@ moms4 <- data.frame( ipd = moments[ ,4] , mc.mean = fourth.moment.mc.average, di
      Rx <- NULL
      
        data.simulation <- DataRebuild( H, n, Rx, moms, x.mode, jsp, stochastic.integration, data.rearrange, corrtype, marg.model,
-                                  variable.names, SBjohn.correction, compute.eec, checkdata, tabulate.similar.data, SI_k = SI_k, input.sn.corr = input.sn.corr) 
+                                  variable.names, SBjohn.correction, compute.eec, checkdata, tabulate.similar.data, SI_k = SI_k, NI_tol = NI_tol, NI_maxEval = NI_maxEval, input.sn.corr = input.sn.corr) 
 
             similar.data.space <- data.simulation$Xspace
                       is.data.statistically.similar <- data.simulation$is.similar  # can be NA is checkdata = FALSE
@@ -1229,7 +1233,7 @@ Print.simul.settings <- function( settings, N, H, stoch, null.corr, silent = FAL
 
   Simulate.many.datasets <- function( datalist, H, method , fill.missing = FALSE, # TODO(me) : later set fill TRUE 
                 SBjohn.correction = F, stochastic.integration  = F, checkdata = F, compute.eec = F, 
-                tabulate.similar.data =  FALSE, set.corr.matr2null = FALSE, SI_k = 8000)  {
+                tabulate.similar.data =  FALSE, set.corr.matr2null = FALSE, SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20)  {
       
 
        K <- length( datalist )  # number of different data-sets
@@ -1243,7 +1247,7 @@ Print.simul.settings <- function( settings, N, H, stoch, null.corr, silent = FAL
     
   function(x)      try(
                    Simulate.data.given.IPD( x, H, method, fill.missing, SBjohn.correction, stochastic.integration,
-                            checkdata, compute.eec, tabulate.similar.data, print.message = FALSE, set.corr.matr2null = set.corr.matr2null, SI_k = SI_k)
+                            checkdata, compute.eec, tabulate.similar.data, print.message = FALSE, set.corr.matr2null = set.corr.matr2null, SI_k = SI_k, NI_tol = NI_tol, NI_maxEval = NI_maxEval)
                                          
                     , T  )     
                    )
@@ -1304,3 +1308,4 @@ label.simul.approach <- function(a, b, c, refmat){
 
 
 
+ 

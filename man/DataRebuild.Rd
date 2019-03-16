@@ -45,7 +45,14 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{tabulate.similar.data}{if TRUE and also checkdata = TRUE it returns the full tabular comparison between the reconstructed and original IPD summaries.}
 
-\item{SI_k}{resampling size of stochastic integration approach. Default to 8000.}
+\item{SI_k}{resampling size of stochastic integration approach. Default
+  to 8000.}
+
+\item{NI_tol}{error tolerance for numerical integration. Default 1e-02,
+  do not decrease too much. As reasonable max value use 1e-05.}
+
+\item{NI_maxEval}{max number of evaluations during numerical
+  integration. Default 500 (instead 0 implies infinite number of evaluations)..}
 
 \item{input.sn.corr}{solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally via optimization. If matrix solution is instead given, it overrides internal optimization and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning. See Details.}
 }
@@ -79,3 +86,4 @@ DataRebuild( H = 100, n = 1000 )
 \seealso{
 [Return.key.IPD.summaries()] for allowed input IPD summary format, [FitJohnsonDistribution()] from archived package JohnsonDistribution, [adaptIntegrate()] from package cubature
 }
+ 
