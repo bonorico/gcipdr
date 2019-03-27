@@ -109,6 +109,13 @@ is.inf.OR.na <- function( vec  ){
        }
 
 
+## two simple utilities to map from a beta to a bit variable
+
+ sample.bit <- function(p) sapply(p, function(x) rbinom(1, 1, x) )
+
+
+map2bit <- function(p) p >= quantile(p, 1 - mean(p)) # keeps both moments and approx correlations
+
 
 ### add rownames to lower triangular correlation matrix
 
@@ -225,3 +232,4 @@ pairs(dat2, upper.panel = panel.cor, lower.panel =switch(smooth,
 
 
 }
+ 

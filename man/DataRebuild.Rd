@@ -29,9 +29,11 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{data.rearrange}{method of IPD dependence reconstruction based on all pairwise IPD correlations (norta), or on first degree correlations only (incomplete).}
 
-\item{corrtype}{what type of IPD correlation matrix are you feeding in ? Spearman (rank.corr), Pearson (moment.corr), or Waerden (normal.corr).}
+\item{corrtype}{what type of IPD correlation matrix are you feeding in ?
+  Spearman (rank.corr), Pearson (moment.corr), or Waerden
+  (normal.corr). see Details}
 
-\item{marg.model}{either gamma or johnson for modeling of non-binary IPD marginal. All binary marginals are modeled via a Bernoulli distribution.}
+\item{marg.model}{either "gamma" or "johnson" for modeling of non-binary IPD marginal. All binary marginals are modeled via a Bernoulli distribution, or a Beta distribution if Kruskal analytic conversion is used (see below).}
 
 \item{variable.names}{names of IPD marginal variables. If NULL (Default) automatic labels are generated.}
 
@@ -54,16 +56,33 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 \item{NI_maxEval}{max number of evaluations during numerical
   integration. Default 500 (instead 0 implies infinite number of evaluations)..}
 
-\item{input.sn.corr}{solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally via optimization. If matrix solution is instead given, it overrides internal optimization and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning. See Details.}
+\item{input.sn.corr}{solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally. If matrix solution is instead given, it overrides internal computations and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning procedure. See Details.}
+
+\item{rank.corr.cp.finetune}{logical. It iteratively fine tunes Kruskal analytic solution (corrtype = rank.corr) of copula parameter, if TRUE and x.mode = TRUE, until the correlation bias of the generated artificial data is reduced. Default FALSE.}
+
+\item{rescale.smoothed.binary}{if Kruskal analytic conversion was used and x.mode = T, it rescales smoothed binary variables into integer format (typically needed). Default FALSE.}
 }
 \value{
 An object of class 'similar.data'.
 }
 \description{
-`DataRebuild()` generates stochastic copies of the original IPD by taking empirical IPD distributional summaries as input data only.
-}
+`DataRebuild()` generates artificial data, that is stochastic copies of the original IPD, by taking empirical IPD distributional summaries as input data only.}
 \details{
-`DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. If data.rearrange = "norta" is chosen it would mostly make sense to use corrtype = "moment.corr". If inversion fails with numerical integration (default), try stochastic integration (stochastic.integration = TRUE) instead. Argument SI_k tunes sample size of stoch. integration. Via argument 'input.sn.corr' we can force usage of a custom copula correlation matrix solution, obtained for instance after post hoc external fine tuning of single matrix entries of a previously ouput matrix solution.
+`DataRebuild()` is based on a Gaussian Copula inversion technique also
+known as NORmal To Anything (NORTA) transformation. Inversion occurs
+upon conversion of an input empirical matrix into standard normal space
+(copula parameter solution). If data.rearrange = "norta", conversion
+(optimization) expects a Pearson correlation matrix as input (corrtype =
+"moment.corr" is chosen automatically default). Using "norta" and
+"rank.corr" performs Kruskal analytic conversion (theoretically valid if
+all marginals are continous), whereas "normal.corr" simply returns the
+input matrix as it is. If optimization fails with numerical integration
+(default), try stochastic integration (stochastic.integration = TRUE)
+instead. Argument SI_k tunes sample size of stoch. integration. Via
+argument 'input.sn.corr' we can force usage of a custom copula
+correlation matrix solution, obtained for instance after post hoc
+external fine tuning of single matrix entries of a previously ouput
+matrix solution.
 }
 \section{Note}{
  this program currently assumes that previous to calculation of the
@@ -79,6 +98,8 @@ An object of class 'similar.data'.
 \dontrun{
 DataRebuild( H = 100, n = 1000 )
 }
+
+help("gcipdr")
 }
 \references{
 

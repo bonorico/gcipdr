@@ -786,7 +786,7 @@ L <- t(U)
 
 Generate.with.Complete.correlation <- function(H, n, correlation.matrix, moments, johnson.parameters, stochastic.integration, x.mode,
                        variable.names, SBjohn.correction = F, corrtype=c("rank.corr", "moment.corr", "normal.corr"),
-                 marg.model=c("gamma", "johnson"), SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20, input.sn.corr = NULL){  
+                 marg.model=c("gamma", "johnson"), SI_k = 8000, NI_tol = 1e-05, NI_maxEval = 20, input.sn.corr = NULL, rescale.smoothed.binary = FALSE){  
 
     corrtype <- match.arg(corrtype)
     marg.model <- match.arg(marg.model)
@@ -822,6 +822,17 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
     
     res <- norta.method( H, n, correlation.matrix, mx, nortasd, stochastic.integration, norm.perc, marginals, variable.names, corrtype, SI_k, NI_tol, NI_maxEval, input.sn.corr )
 
+
+    if ( ( corrtype == "rank.corr" & any(x.mode) & rescale.smoothed.binary ) ) # convert smoothed binary to integer bits
+           
+res$copula.inverse <- lapply(res$copula.inverse, function(x){
+
+ x[, x.mode] <- apply( x[, x.mode], 2, map2bit )  ## TODO: x.mode will include categorical (Dir -> mult)
+
+    return(x)
+  } )
+
+    
   return( list( artificial.data = res$copula.inverse, copula.params = res$copula.params  ) )
        
       } 
@@ -830,19 +841,19 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 
 #' @title IPD reconstruction from IPD summaries only.
 #'
-#' @description `DataRebuild()` generates stochastic copies of the original IPD by taking empirical IPD distributional summaries as input data only.
+#' @description `DataRebuild()` generates artificial data, that is stochastic copies of the original IPD, by taking empirical IPD distributional summaries as input data only.
 #'
 #' @param H integer number of independent IPD replicates to be generated.
 #' @param n integer number of independent IPD records. Ex: number of rows (subjects) in original IPD.
-#' @param correlation.matrix pairwise IPD correlations values.
+#' @param correlation.matrix pairwise IPD correlation matrix.
 #' @param moments numeric array of IPD marginal moments up to fourth degree for all IPD variables (columns).
 #' @param johnson.parameters array of Johnson parameters for each IPD marginal variable. Depends on CRAN archived 'JohnsonDistribution' package. If NULL it is computed on given 'moments'.
 #' @param x.mode logical vector: is IPD marginal variable binary (TRUE) or not ?
 #' @param stochastic.integration logical: should Monte Carlo integration be used to resolve Gaussian copula inversion (NORTA transformation)? Default to FALSE, that is numerical integration relying on package 'cubature' is used first. 
 #' @param data.rearrange method of IPD dependence reconstruction based on all pairwise IPD correlations (norta), or on first degree correlations only (incomplete).
-#' @param corrtype what type of IPD correlation matrix are you feeding in ? Spearman (rank.corr), Pearson (moment.corr), or Waerden (normal.corr). 
+#' @param corrtype what type of IPD correlation matrix are you feeding in ? Spearman (rank.corr), Pearson (moment.corr), or Waerden (normal.corr). see Deatails.
 #'
-#' @param marg.model either gamma or johnson for modeling of non-binary IPD marginal. All binary marginals are modeled via a Bernoulli distribution.
+#' @param marg.model either "gamma" or "johnson" for modeling of non-binary IPD marginal. All binary marginals are modeled via a Bernoulli distribution, or a Beta distribution if Kruskal analytic conversion is used (see below).
 #'
 #' @param variable.names names of IPD marginal variables. If NULL (Default) automatic labels are generated.
 #'
@@ -861,11 +872,15 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 #'
 #' @param NI_maxEval max number of evaluations during numerical integration. Default 500 (instead 0 implies infinite number of evaluations).
 #'
-#' @param input.sn.corr solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally via optimization. If matrix solution is instead given, it overrides internal optimization and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning. See Details.
+#' @param input.sn.corr solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally. If matrix solution is instead given, it overrides internal computations and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning procedure. See Details.
 #'
+#'@param rank.corr.cp.finetune logical. It iteratively fine tunes Kruskal analytic solution (corrtype = rank.corr) of copula parameter, if TRUE and x.mode = TRUE, until the correlation bias of the generated artificial data is reduced. Default FALSE.
+#'
+#'@param rescale.smoothed.binary if Kruskal analytic conversion was used and x.mode = T, it rescales smoothed binary variables into integer format (typically needed). Default FALSE.
+#' 
 #' @return An object of class 'similar.data'.
 #'
-#' @details `DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. If data.rearrange = "norta" is chosen it would mostly make sense to use corrtype = "moment.corr". If inversion fails with numerical integration (default), try stochastic integration (stochastic.integration = TRUE) instead. Argument SI_k tunes sample size of stoch. integration. Via argument 'input.sn.corr' we can force usage of a custom copula correlation matrix solution, obtained for instance after post hoc external fine tuning of single matrix entries of a previously ouput matrix solution.
+#' @details `DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. Inversion occurs upon conversion of an input empirical matrix into standard normal space (copula parameter solution). If data.rearrange = "norta", conversion (optimization) expects a Pearson correlation matrix as input (corrtype = "moment.corr" is chosen automatically default). Using "norta" and "rank.corr" performs Kruskal analytic conversion (theoretically valid if all marginals are continous), whereas "normal.corr" simply returns the input matrix as it is. If optimization fails with numerical integration (default), try stochastic integration (stochastic.integration = TRUE) instead. Argument SI_k tunes sample size of stoch. integration. Via argument 'input.sn.corr' we can force usage of a custom copula correlation matrix solution, obtained for instance after post hoc external fine tuning of single matrix entries of a previously ouput matrix solution.
 #' 
 #' @section Note:  this program currently assumes that previous to calculation of the input IPD summaries every IPD categorical variable with \eqn{m} levels was first converted to \eqn{m-1} dummy (binary) variables. As an alternative one can, in the future, allow for categorical marginals as well and use a Multinomial distribution modeling. This program relies on archived package 'JohnsonDistribution'.
 
@@ -883,8 +898,7 @@ nortasd <- sqrt( Ind*( mx*(1-mx) ) ) + (1-Ind)*sdx
 DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.parameters = NULL,  
                        stochastic.integration = FALSE, data.rearrange = c("norta", "incomplete"),
                         corrtype = c("moment.corr", "rank.corr", "normal.corr"),
-                 marg.model = c("gamma", "johnson"), variable.names = NULL, SBjohn.correction = F, compute.eec = F, 
-                  checkdata = F, tabulate.similar.data =  FALSE, SI_k = 8000, NI_tol = 1e-02, NI_maxEval = 500, input.sn.corr = NULL){ 
+                 marg.model = c("gamma", "johnson"), variable.names = NULL, SBjohn.correction = FALSE, compute.eec = FALSE, checkdata = FALSE, tabulate.similar.data =  FALSE, SI_k = 8000, NI_tol = 1e-02, NI_maxEval = 500, input.sn.corr = NULL, rank.corr.cp.finetune = FALSE, rescale.smoothed.binary = FALSE){ 
 
                       data.rearrange <- match.arg(data.rearrange)
     corrtype <- match.arg(corrtype)
@@ -897,7 +911,6 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
     }
 
  ### get Johnson parameters from empirical moments using Hill AS 99 algorithm
-
     
     if (is.null(johnson.parameters) & marg.model == "johnson")
     
@@ -907,25 +920,32 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
         else
             rep(NA, 6)   }    )
 
-    #
-    
+    #    
     if (is.null(correlation.matrix))
     data.rearrange <- "incomplete"  # always if corr matrix is null ALLOW FOR NULL CORR MATRIX (METHOD SET TO INCOMPLETE ALWAYS)
     
    Xlist <- switch(data.rearrange, # (sample) space of similar data-sets 
 
  incomplete= Generate.with.Incomplete.correlation( H, n,  correlation.matrix, moments,
-                                    johnson.parameters, x.mode, variable.names, SBjohn.correction, compute.eec,
-                                    corrtype, marg.model ),
+        johnson.parameters, x.mode, variable.names, SBjohn.correction, compute.eec, corrtype, marg.model ),
 
       norta= Generate.with.Complete.correlation( H, n,  correlation.matrix, moments,
-                                    johnson.parameters, stochastic.integration, x.mode, variable.names, SBjohn.correction,
-                                    corrtype, marg.model, SI_k, NI_tol, NI_maxEval, input.sn.corr )   )                                          
-  mex <- NA
- if (checkdata) 
-        mex <- is.data.similar(Xlist$artificial.data, correlation.matrix, moments, corrtype, tabulate.similar.data ) # boolean 
-    
+                   johnson.parameters, stochastic.integration, x.mode, variable.names, SBjohn.correction,
+            corrtype, marg.model, SI_k, NI_tol, NI_maxEval, input.sn.corr, rescale.smoothed.binary )   )
 
+rkcbool <- (rank.corr.cp.finetune & corrtype == "rank.corr" & any(x.mode) & rescale.smoothed.binary)                                  
+ mex <- NA
+ if (checkdata | rkcbool) 
+     mex <- is.data.similar(Xlist$artificial.data, correlation.matrix, moments, corrtype, ifelse(rkcbool, TRUE, tabulate.similar.data) ) # boolean
+
+    if ( rkcbool ){  # new option: fine tune analytic solution (corrtype = rank.corr) of copula parameter
+        ftr <- fine.tune.cp.looped( Xlist$copula.params, mex[[5]]$diff, Xlist$artificial.data, H, n, correlation.matrix, moments, johnson.parameters, x.mode, variable.names, SBjohn.correction, marg.model)  # iterative fine tuning of copula parameter on newly generated artif data
+        
+        Xlist$artificial.data <- ftr$artificial.data  # replace with finetuned artif data
+                        Xlist$copula.params <- ftr$copula.params  # replace with finetuned cp
+        mex <- ftr$is.similar # replace with updated data-check 
+    }
+            
     out <- list(Xspace = Xlist$artificial.data, is.similar = mex, johns.params = johnson.parameters, copula.parameters = Xlist$copula.params)
       class(out) <- "similar.data"
   return(  out  ) 
@@ -933,9 +953,50 @@ DataRebuild <- function( H, n, correlation.matrix, moments, x.mode, johnson.para
    }
 
 
+### NEW: fine tuning options for analytic solution (corrtype = "rank.corr") of copula parameter
+
+fine.tune.cp <- function(cp, diff){  # it assumes beta->bern conversion always underestimates original correlation
+    
+ x <- cp[lower.tri(cp)]    
+    y <- which(abs(diff) > 0.05)
+  x[y] <- sign(x[y]) * ( abs(x[y]) + (1-abs(x[y]))*abs(diff[y]) + replicate(length(y), runif(1, 0.001, 0.005) ) )  # fine tune based on observed bias + random noise
+    return( make.square.matrix(x, dim(cp)[1]) )
+   }
+
+#  iterative fine tuning on updated artificial data generations
+
+fine.tune.cp.looped <- function(cp, diff, ad, H, n, correlation.matrix, moments, johnson.parameters, x.mode, variable.names, SBjohn.correction, marg.model ){
+
+    i <- 0
+    checkad <- NULL
+
+    while (any(abs(diff) > 0.055 ) ){
+
+        cp <- fine.tune.cp(cp, diff) # fine tuned analytic solution of copula parameter
+        
+               if (any(abs(cp[lower.tri(cp)]) >= 0.99) | i > 10) # tuning can enter loop where diff becomes almost constant 
+                   break        
+        i <- i+1
+        print(paste("fine tuning iteration", i))
+
+        if (!is.SPD.matrix(cp)) # check spd condition
+            cp <- make.matrix.SPD.if.NOT.flagged( cp[lower.tri(cp)], dim(cp)[1] )
+        
+        updated <- Generate.with.Complete.correlation( H, n, correlation.matrix, moments, johnson.parameters, x.mode = x.mode, variable.names = variable.names, SBjohn.correction = SBjohn.correction, marg.model = marg.model, corrtype = "rank.corr", input.sn.corr = cp, rescale.smoothed.binary = TRUE ) # regenerate data with fine tuned copula parameter
+
+          ad <- updated$artificial.data  
+              checkad <- is.data.similar(ad, correlation.matrix, moments, corrtype = "rank.corr", tabulate = TRUE )
+        diff <- checkad[[5]]$diff # updated correlation bias on new artif data. If bias is still too big, fine tunes cp again.
+      
+    } 
+           return( list( copula.params = cp, artificial.data = ad, is.similar = checkad ) ) 
+  }
+ 
+
+#### QUICK CHECK on generated artificial data
 ## data check: is.data.similar (Yes/No). data is similar in the sense of Definition xx of Thesis
 
-is.data.similar <- function(Xspace, correlation.matrix, moments, corrtype, tabulate = FALSE, split = FALSE ){  # for corrfunc use 
+is.data.similar <- function(Xspace, correlation.matrix, moments, corrtype, tabulate = FALSE, split = FALSE){  # for corrfunc use 
 
  if ( !is.null(correlation.matrix) ) {    
      detected.corrtype <- attr(correlation.matrix, "corr.type", T)
@@ -1005,7 +1066,7 @@ moms1 <- data.frame( ipd = moments[ ,1] , mc.mean = first.moment.mc.average , di
 moms2 <- data.frame( ipd = moments[ ,2] , mc.mean = second.moment.mc.average, diff = norm2  )
 moms3 <- data.frame( ipd = moments[ ,3] , mc.mean = third.moment.mc.average , diff = norm3 )
 moms4 <- data.frame( ipd = moments[ ,4] , mc.mean = fourth.moment.mc.average, diff = norm4  )
-    
+
     if ( mex1 ){
  print("Badly generated 1st moments:", quote = F)
     print(moms1[abs(moms1$diff) > 1, ], digits =  4, quote = F) }
@@ -1020,8 +1081,7 @@ moms4 <- data.frame( ipd = moments[ ,4] , mc.mean = fourth.moment.mc.average, di
     print(moms4[abs(moms4$diff) > 1, ], digits = 4, quote = F) }
        if ( mex0 ){
  print("Badly generated correlations:", quote = F )
-    print(ltRxdat[abs(ltRxdat$diff) > 0.05 | !norm0b, ], digits = 4, quote = F) }
-
+ print(ltRxdat[abs(ltRxdat$diff) > 0.05 | !norm0b, ], digits = 4, quote = F)  }
 
      if (split)
            bool <- data.frame( bool.marg1_2 = ifelse(mex1 | mex2, F, T ) ,
