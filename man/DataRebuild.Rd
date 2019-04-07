@@ -58,9 +58,14 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{input.sn.corr}{solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally. If matrix solution is instead given, it overrides internal computations and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning procedure. See Details.}
 
-\item{rank.corr.cp.finetune}{logical. It iteratively fine tunes Kruskal analytic solution (corrtype = rank.corr) of copula parameter, if TRUE and x.mode = TRUE, until the correlation bias of the generated artificial data is reduced. Default FALSE.}
+\item{cp.finetune}{logical. If NORTA method is used and x.mode = TRUE, it iteratively fine-tunes Kruskal analytic solution (corrtype = rank.corr) of copula parameter, until the correlation bias of the generated artificial data is reduced. It can also be used along with argument 'assume.all.smooth = TRUE' (see below). Default FALSE.}
 
-\item{rescale.smoothed.binary}{if Kruskal analytic conversion was used and x.mode = T, it rescales smoothed binary variables into integer format (typically needed). Default FALSE.}
+\item{rescale.smoothed.binary}{if Kruskal analytic conversion was used
+  and x.mode = T, it rescales smoothed binary variables into integer
+  format (typically needed). Default FALSE.}
+
+\item{assume.all.smooth}{logical. If NORTA method is used, it pretends an input Pearson correlation matrix is already a valid Kruskal solution, which falsely assumes all variables are continuous, when some are actually discrete. This is biased but it can yield quick (fine-tunable -- see 'cp.finetune'). Default FALSE.}
+
 }
 \value{
 An object of class 'similar.data'.
@@ -78,11 +83,7 @@ upon conversion of an input empirical matrix into standard normal space
 all marginals are continous), whereas "normal.corr" simply returns the
 input matrix as it is. If optimization fails with numerical integration
 (default), try stochastic integration (stochastic.integration = TRUE)
-instead. Argument SI_k tunes sample size of stoch. integration. Via
-argument 'input.sn.corr' we can force usage of a custom copula
-correlation matrix solution, obtained for instance after post hoc
-external fine tuning of single matrix entries of a previously ouput
-matrix solution.
+instead. 
 }
 \section{Note}{
  this program currently assumes that previous to calculation of the
