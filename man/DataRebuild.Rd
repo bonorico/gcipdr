@@ -9,7 +9,12 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
   data.rearrange = c("incomplete", "norta"), corrtype = c("rank.corr",
   "moment.corr", "normal.corr"), marg.model = c("gamma", "johnson"),
   variable.names = NULL, SBjohn.correction = F, compute.eec = F,
+<<<<<<< HEAD
   checkdata = F, tabulate.similar.data = FALSE)
+=======
+  checkdata = F, tabulate.similar.data = FALSE,
+  SI_k = 8000, input.sn.corr = NULL)
+>>>>>>> edit_1
 }
 \arguments{
 \item{H}{integer number of independent IPD replicates to be generated.}
@@ -28,13 +33,17 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{data.rearrange}{method of IPD dependence reconstruction based on all pairwise IPD correlations (norta), or on first degree correlations only (incomplete).}
 
-\item{corrtype}{what type of IPD correlation matrix are you feeding in ? Spearman (rank.corr), Pearson (moment.corr), or Waerden (normal.corr).}
+\item{corrtype}{what type of IPD correlation matrix are you feeding in ?
+  Spearman (rank.corr), Pearson (moment.corr), or Waerden
+  (normal.corr). see Details}
 
-\item{marg.model}{either gamma or johnson for modeling of non-binary IPD marginal. All binary marginals are modeled via a Bernoulli distribution.}
+\item{marg.model}{either "gamma" or "johnson" for modeling of non-binary IPD marginal. All binary marginals are modeled via a Bernoulli distribution, or a Beta distribution if Kruskal analytic conversion is used (see below).}
 
 \item{variable.names}{names of IPD marginal variables. If NULL (Default) automatic labels are generated.}
 
-\item{SBjohn.correction}{logical. Should be Johnson marginal values corrected ? Default to FALSE. See Details.}
+\item{SBjohn.correction}{logical. Should be Johnson marginal values
+  corrected ? Default to FALSE. If TRUE, wrongly sampled negative values
+ are set to the minimum positive sampled value. }
 
 \item{compute.eec}{currently deprecated. Do not edit default value.}
 
@@ -42,15 +51,50 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{tabulate.similar.data}{if TRUE and also checkdata = TRUE it returns the full tabular comparison between the reconstructed and original IPD summaries.}
 
+<<<<<<< HEAD
+=======
+\item{SI_k}{resampling size of stochastic integration approach. Default
+  to 8000.}
+
+\item{NI_tol}{error tolerance for numerical integration. Default 1e-02,
+  do not decrease too much. As reasonable max value use 1e-05.}
+
+\item{NI_maxEval}{max number of evaluations during numerical
+  integration. Default 500 (instead 0 implies infinite number of evaluations)..}
+
+\item{input.sn.corr}{solution of 'correlation.matrix' into standard normal space (the Gaussian copula parameter, see Details). Default is NULL and solution is found internally. If matrix solution is instead given, it overrides internal computations and it is directly used to generate artificial data. This can be useful as a post hoc data generation tuning procedure. See Details.}
+
+\item{cp.finetune}{logical. If NORTA method is used and x.mode = TRUE, it iteratively fine-tunes Kruskal analytic solution (corrtype = rank.corr) of copula parameter, until the correlation bias of the generated artificial data is reduced. It can also be used along with argument 'assume.all.smooth = TRUE' (see below). Default FALSE.}
+
+\item{rescale.smoothed.binary}{if Kruskal analytic conversion was used
+  and x.mode = T, it rescales smoothed binary variables into integer
+  format (typically needed). Default FALSE.}
+
+\item{assume.all.smooth}{logical. If NORTA method is used, it pretends an input Pearson correlation matrix is already a valid Kruskal solution, which falsely assumes all variables are continuous, when some are actually discrete. This is biased but it can yield quick (fine-tunable -- see 'cp.finetune'). Default FALSE.}
+
+>>>>>>> edit_1
 }
 \value{
 An object of class 'similar.data'.
 }
 \description{
-`DataRebuild()` generates stochastic copies of the original IPD by taking empirical IPD distributional summaries as input data only.
-}
+`DataRebuild()` generates artificial data, that is stochastic copies of the original IPD, by taking empirical IPD distributional summaries as input data only.}
 \details{
+<<<<<<< HEAD
 `DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. If data.rearrange = "norta" is chosen it would mostly make sense to use corrtype = "moment.corr". If inversion fails with numerical integration (default), try stochastic integration (stochastic.integration = TRUE) instead. 
+=======
+`DataRebuild()` is based on a Gaussian Copula inversion technique also
+known as NORmal To Anything (NORTA) transformation. Inversion occurs
+upon conversion of an input empirical matrix into standard normal space
+(copula parameter solution). If data.rearrange = "norta", conversion
+(optimization) expects a Pearson correlation matrix as input (corrtype =
+"moment.corr" is chosen automatically default). Using "norta" and
+"rank.corr" performs Kruskal analytic conversion (theoretically valid if
+all marginals are continous), whereas "normal.corr" simply returns the
+input matrix as it is. If optimization fails with numerical integration
+(default), try stochastic integration (stochastic.integration = TRUE)
+instead. 
+>>>>>>> edit_1
 }
 \section{Note}{
  this program currently assumes that previous to calculation of the
@@ -66,6 +110,8 @@ An object of class 'similar.data'.
 \dontrun{
 DataRebuild( H = 100, n = 1000 )
 }
+
+help("gcipdr")
 }
 \references{
 
@@ -73,3 +119,4 @@ DataRebuild( H = 100, n = 1000 )
 \seealso{
 [Return.key.IPD.summaries()] for allowed input IPD summary format, [FitJohnsonDistribution()] from archived package JohnsonDistribution, [adaptIntegrate()] from package cubature
 }
+ 

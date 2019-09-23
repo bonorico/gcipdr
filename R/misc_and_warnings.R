@@ -29,7 +29,7 @@
 ## unlink(pkgFile)
 
 
-warning("This package depends on CRAN archived package 'JohnsonDistribution'. Please manually download this dependency from: https://cran.r-project.org/src/contrib/Archive/JohnsonDistribution/JohnsonDistribution_0.24.tar.gz")
+ warning("This package depends on CRAN archived package 'JohnsonDistribution'. Please manually download this dependency from: https://cran.r-project.org/src/contrib/Archive/JohnsonDistribution/JohnsonDistribution_0.24.tar.gz")
 
 
 # warning("Other dependecies: moments, parallel, cubature, mvtnorm, ggplot2")
@@ -109,6 +109,31 @@ is.inf.OR.na <- function( vec  ){
        }
 
 
+## two simple utilities to map from a beta to a bit variable
+
+ sample.bit <- function(p) sapply(p, function(x) rbinom(1, 1, x) )
+
+
+map2bit <- function(p) p >= quantile(p, 1 - mean(p)) # keeps both moments and approx correlations
+
+
+### add rownames to lower triangular correlation matrix
+
+corrPairByName <- function(stnames){
+
+ cpnamesfull <- unlist(lapply( stnames, function(i) lapply(stnames, function(j){
+
+        paste( i, "-", j, sep = "" )
+
+    }  )) )
+     
+#
+ cpnames <- cpnamesfull[as.vector(lower.tri(matrix( nrow = length(stnames), ncol=length(stnames))))] 
+
+    return( cpnames)
+    
+}
+
 
 
 
@@ -159,8 +184,12 @@ label[first] <-
 
 
 
+<<<<<<< HEAD
 
 #### ## scatterplot function with linear and loess regression
+=======
+#####  ## scatterplot function with linear and loess | lowess regression
+>>>>>>> edit_1
 
 
 panel.fit <- function(x,y){
@@ -208,3 +237,7 @@ pairs(dat2, upper.panel = panel.cor, lower.panel =switch(smooth,
 
 
 }
+<<<<<<< HEAD
+=======
+ 
+>>>>>>> edit_1
