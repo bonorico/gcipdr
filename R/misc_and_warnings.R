@@ -184,12 +184,8 @@ label[first] <-
 
 
 
-<<<<<<< HEAD
-
-#### ## scatterplot function with linear and loess regression
-=======
 #####  ## scatterplot function with linear and loess | lowess regression
->>>>>>> edit_1
+
 
 
 panel.fit <- function(x,y){
@@ -237,7 +233,4 @@ pairs(dat2, upper.panel = panel.cor, lower.panel =switch(smooth,
 
 
 }
-<<<<<<< HEAD
-=======
- 
->>>>>>> edit_1
+
