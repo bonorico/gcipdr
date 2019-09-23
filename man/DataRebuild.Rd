@@ -9,12 +9,9 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
   data.rearrange = c("incomplete", "norta"), corrtype = c("rank.corr",
   "moment.corr", "normal.corr"), marg.model = c("gamma", "johnson"),
   variable.names = NULL, SBjohn.correction = F, compute.eec = F,
-<<<<<<< HEAD
-  checkdata = F, tabulate.similar.data = FALSE)
-=======
   checkdata = F, tabulate.similar.data = FALSE,
   SI_k = 8000, input.sn.corr = NULL)
->>>>>>> edit_1
+
 }
 \arguments{
 \item{H}{integer number of independent IPD replicates to be generated.}
@@ -51,8 +48,6 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{tabulate.similar.data}{if TRUE and also checkdata = TRUE it returns the full tabular comparison between the reconstructed and original IPD summaries.}
 
-<<<<<<< HEAD
-=======
 \item{SI_k}{resampling size of stochastic integration approach. Default
   to 8000.}
 
@@ -72,7 +67,7 @@ DataRebuild(H, n, correlation.matrix, moments, x.mode,
 
 \item{assume.all.smooth}{logical. If NORTA method is used, it pretends an input Pearson correlation matrix is already a valid Kruskal solution, which falsely assumes all variables are continuous, when some are actually discrete. This is biased but it can yield quick (fine-tunable -- see 'cp.finetune'). Default FALSE.}
 
->>>>>>> edit_1
+
 }
 \value{
 An object of class 'similar.data'.
@@ -80,9 +75,6 @@ An object of class 'similar.data'.
 \description{
 `DataRebuild()` generates artificial data, that is stochastic copies of the original IPD, by taking empirical IPD distributional summaries as input data only.}
 \details{
-<<<<<<< HEAD
-`DataRebuild()` is based on a Gaussian Copula inversion technique also known as NORmal To Anything (NORTA) transformation. If data.rearrange = "norta" is chosen it would mostly make sense to use corrtype = "moment.corr". If inversion fails with numerical integration (default), try stochastic integration (stochastic.integration = TRUE) instead. 
-=======
 `DataRebuild()` is based on a Gaussian Copula inversion technique also
 known as NORmal To Anything (NORTA) transformation. Inversion occurs
 upon conversion of an input empirical matrix into standard normal space
@@ -94,7 +86,7 @@ all marginals are continous), whereas "normal.corr" simply returns the
 input matrix as it is. If optimization fails with numerical integration
 (default), try stochastic integration (stochastic.integration = TRUE)
 instead. 
->>>>>>> edit_1
+
 }
 \section{Note}{
  this program currently assumes that previous to calculation of the
