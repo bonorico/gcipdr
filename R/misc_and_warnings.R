@@ -39,79 +39,75 @@
 ## ..... plus some miscellaneous functions
 
 
-is.binary <-
-         function(x, tol = .Machine$double.eps^0.5){  # check if var is binary
+is.binary <- function(x, tol = .Machine$double.eps^0.5)
+{
+                                        # check if var is binary
+    x <- na.omit(x)
+    all( abs(x - round(x)) < tol & x >= 0 & x <= 1  )
 
-             x <- na.omit(x)
-             
-all( abs(x - round(x)) < tol & x >= 0 & x <= 1  )
-
-         }  
-
-#
-reldist <- function(mean, true, range){  # relative distance
+}  
 
 
+
+reldist <- function(mean, true, range)
+{
+                                        # relative distance
     (mean-true)/range
 
-   }
+}
 
-# function to check is a parameter is finite or available
 
-is.inf <- function( vec ){
+                                        # function to check is a parameter is finite or available
+
+is.inf <- function( vec )
+{
 
    vec == Inf | vec == -Inf
 
 }
 
-#
-is.inf.OR.na <- function( vec  ){
 
- is.inf(vec) | is.na(vec)    
+is.inf.OR.na <- function( vec  )
+{
+    is.inf(vec) | is.na(vec)    
 
 }
 
 
-
-#
-
-
-
  ## is vector in continuous domain ??
 
- is.continuous <- function(x){
-
-       if ( is.numeric(x) | is.integer(x)) 
-      !is.binary(x)
-           else{
-              if ( is.character(x) ) 
-                  FALSE
-              else{
-                  if ( is.factor(x) ) 
-                      FALSE
-                       
-                  }
-              }     
-   }
+is.continuous <- function(x)
+{
+    if ( is.numeric(x) | is.integer(x))
+        !is.binary(x)
+    else
+    {
+        if ( is.character(x) )
+            FALSE
+        else
+        {
+            if ( is.factor(x) )
+                FALSE
+        }
+    }
+}
 
 
 # are vectors in continuous domain ?
 
-   are.continuous <- function( ds ){
-
-       if ( !is.null( dim(ds) ) ) 
-
-           unlist( lapply( ds, function(x) is.continuous(x) ) )
+are.continuous <- function( ds )
+{
+    if ( !is.null( dim(ds) ) )
+        unlist( lapply( ds, function(x) is.continuous(x) ) )
     else
-
         is.continuous(ds)
-       
-       }
+
+}
 
 
 ## two simple utilities to map from a beta to a bit variable
 
- sample.bit <- function(p) sapply(p, function(x) rbinom(1, 1, x) )
+sample.bit <- function(p) sapply(p, function(x) rbinom(1, 1, x) )
 
 
 map2bit <- function(p) p >= quantile(p, 1 - mean(p)) # keeps both moments and approx correlations
@@ -119,16 +115,28 @@ map2bit <- function(p) p >= quantile(p, 1 - mean(p)) # keeps both moments and ap
 
 ### add rownames to lower triangular correlation matrix
 
-corrPairByName <- function(stnames){
+corrPairByName <- function(stnames)
+{
+    cpnamesfull <- unlist(
+        lapply(stnames, function(i)
+            lapply(stnames, function(j)
+            {
+                paste( i, "-", j, sep = "" )
 
- cpnamesfull <- unlist(lapply( stnames, function(i) lapply(stnames, function(j){
-
-        paste( i, "-", j, sep = "" )
-
-    }  )) )
+            }
+            )
+            )
+    )
      
-#
- cpnames <- cpnamesfull[as.vector(lower.tri(matrix( nrow = length(stnames), ncol=length(stnames))))] 
+                                        
+    cpnames <- cpnamesfull[as.vector(
+        lower.tri(matrix(
+            nrow = length(stnames),
+            ncol=length(stnames)
+        )
+        )
+    )
+    ] 
 
     return( cpnames)
     
@@ -141,45 +149,56 @@ corrPairByName <- function(stnames){
 
 # df = data.frame, cols = target columns, span = number of multirow span for each column ...
 
-make.multirow <- function( df, cols, span = rep(NA, length = dim(df)[2]), em = rep(NA, length = dim(df)[2]),
-                          rotate = rep(FALSE, length(cols))){
+make.multirow <- function( df, cols,
+                          span = rep(NA, length = dim(df)[2]),
+                          em = rep(NA, length = dim(df)[2]),
+                          rotate = rep(FALSE, length(cols)
+                                       )
+                          )
+{
+    newcols <- do.call(
+        "cbind",
+        lapply(1:length(cols), function(j)
+        {
+            label <- as.character(df[[ cols[j] ]]) # convert value into character
+            if (is.na(span[j]))  # define row span
+                span.row <- rle(label)$lengths
+            else
+                span.row <- span[j]
+            if (is.na(em[j]))
+                col.width <- "4em"
+            else
+                col.width <- em[j]
 
+            first <- !duplicated(label)   # set duplicates to void
+            label[!first] <- ""
 
- newcols <- do.call("cbind",
+                                        # define appearance of \multirow
+            if( rotate[j] )
+                label[first] <- paste0(
+                    "\\parbox[t]{2mm}{\\multirow{",
+                    span.row,
+                    "}{*}{\\rotatebox[origin=c]{90}{",
+                    label[first], "}}}"
+                )
+            else
+                label[first] <- paste0(
+                    "\\multirow{",
+                    span.row,
+                    "}{",
+                    col.width,"}{",
+                    label[first], "}"
+                )
 
-                   lapply(1:length(cols), function(j){
-     
-  label <- as.character(df[[ cols[j] ]]) # convert value into character
-     if (is.na(span[j]))  # define row span
-     span.row <- rle(label)$lengths
-      else
-          span.row <- span[j]
-  if (is.na(em[j]))
-   col.width <- "4em"
-                       else
-       col.width <- em[j]
-                       
-  first <- !duplicated(label)   # set duplicates to void
-       label[!first] <- ""
+            return( label )
+        }
 
-# define appearance of \multirow
-       if( rotate[j] ) 
-label[first] <-
-   paste0("\\parbox[t]{2mm}{\\multirow{", span.row, "}{*}{\\rotatebox[origin=c]{90}{", label[first], "}}}")
-    else
-  label[first] <-
-   paste0("\\multirow{", span.row, "}{",col.width,"}{", label[first], "}")
+        )
+    )
 
-                       
-   return( label )
-     }
-  
-        )  )
+    df[, cols] <- newcols
+    return( df )
     
-  df[, cols] <- newcols
-  return( df )
-    
-
 }
 
 
@@ -188,34 +207,35 @@ label[first] <-
 
 
 
-panel.fit <- function(x,y){
+panel.fit <- function(x,y)
+{
     b <- lm(y~x)$coef
     pred <- b[1] + b[2]*x
-   points(x,y, pch = ".")
-lines(lowess(x,y), col= 'blue', lty = 4, lwd = 2)
-    lines(x, pred , col='red', lwd = 2)
-   
-    
+    points(x,y, pch = ".")
+    lines(lowess(x,y), col= 'blue', lty = 4, lwd = 2)
+    lines(x, pred , col='red', lwd = 2)       
 }
 
-                                        #
+                                        
 
-panel.fit2 <- function(x,y){
+panel.fit2 <- function(x,y)
+{
     b <- lm(y~x)$coef
     pred <- b[1] + b[2]*x
-   points(x,y, pch = ".")
-lines(x[order(x)], loess(y~x)$fitted[order(x)], col= 'blue', lty = 4, lwd = 2)
+    points(x,y, pch = ".")
+    lines(x[order(x)],
+          loess(y~x)$fitted[order(x)],
+          col= 'blue', lty = 4, lwd = 2)
     lines(x, pred , col='red', lwd = 2)
-   
-    
+       
 }
 
 #
 
-panel.cor <- function(x,y){
+panel.cor <- function(x,y)
+{
 
     r <- cor(x,y)
-
     legend("center", paste(round(r,2)), bty = "n")
     
   }
@@ -223,14 +243,18 @@ panel.cor <- function(x,y){
 
                                         #
 
-scatter <- function(dat2, smooth = c("loess", "lowess"), text = NULL){
-
+scatter <- function(dat2,
+                    smooth = c("loess", "lowess"),
+                    text = NULL)
+{
     smooth <- match.arg(smooth)
-    
-pairs(dat2, upper.panel = panel.cor, lower.panel =switch(smooth,
-                             "lowess" = panel.fit,                            
-                           "loess" = panel.fit2 ), main = text )
-
-
+    pairs(dat2,
+          upper.panel = panel.cor,
+          lower.panel =switch(smooth,
+                              "lowess" = panel.fit,
+                              "loess" = panel.fit2
+                              ),
+          main = text
+          )
 }
 

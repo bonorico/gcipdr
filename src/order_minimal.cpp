@@ -31,16 +31,16 @@ using namespace arma;
 
 
 ivec rankC(const vec& X){  // no silly while loops !!!
-
+  
   NumericVector x = Rcpp::wrap(X);
-   NumericVector sorted = clone(x).sort();
-IntegerVector minranking = match(x, sorted);
+  NumericVector sorted = clone(x).sort();
+  IntegerVector minranking = match(x, sorted);
 
   ivec ranked(minranking); 
   
   return ranked; 
 
-  }
+}
 
 
 
@@ -50,8 +50,8 @@ IntegerVector minranking = match(x, sorted);
 double rjmC( const vec& x,  const vec& y){
 
   return sum( rankC(x)%rankC(y) );
- 
-     }
+
+}
 
 
 
@@ -62,11 +62,10 @@ double rjmC( const vec& x,  const vec& y){
 double spcorC( const vec& x, const vec& y){ 
 
   vec rx = conv_to<vec>::from( rankC(x)) ;
- vec ry = conv_to<vec>::from( rankC(y)) ;
+  vec ry = conv_to<vec>::from( rankC(y)) ;
+  return as_scalar(cor(rx,ry)) ;
 
- return as_scalar(cor(rx,ry)) ;
-
-     }
+}
 
 
 
@@ -76,13 +75,13 @@ double jmC( const vec& x, const vec& y){
 
   return sum( x%y );
  
-     }
+}
 
 // pearson corr
 double pearcorrC( const vec& x, const vec& y ){ 
    return as_scalar( cor(x ,y ) );   
 
- }
+}
 
 
 // absolute value for double 
@@ -91,7 +90,7 @@ double absv(double x){
 
   return sqrt( pow( x, 2 )  );
 
-   }
+}
 
 
 // function pointer syntax from Rcpp Gallery Dirk Edelbeutel:  
@@ -110,13 +109,14 @@ XPtr<funcpointer> adressmyfuncs(std::string flabel){
     return( XPtr<funcpointer>( new funcpointer ( &spcorC  ) )     );
   else if (flabel == "joint.rank")
     return( XPtr<funcpointer>( new funcpointer ( &rjmC  ) )     );
-    else if (flabel == "joint.moment")  
-      return( XPtr<funcpointer>( new funcpointer ( &jmC  ) )     );
-    else if (flabel == "moment.corr")  
-  return( XPtr<funcpointer>( new funcpointer ( &pearcorrC  ) )     );
-    else
-  return XPtr<funcpointer>(R_NilValue);
-    }
+  else if (flabel == "joint.moment")
+    return( XPtr<funcpointer>( new funcpointer ( &jmC  ) )     );
+  else if (flabel == "moment.corr")
+    return( XPtr<funcpointer>( new funcpointer ( &pearcorrC  ) )     );
+  else
+    return XPtr<funcpointer>(R_NilValue);
+
+}
 
 
 
@@ -130,57 +130,45 @@ List findzerocorr(const vec&  xell, const vec& x, const double test, const std::
 
   // call type of function to apply
 
-    XPtr<funcpointer> xpfun = adressmyfuncs(rf_type);
-    funcpointer fun = *xpfun;
-
-  
-    mat zero(x.n_elem, x.n_elem);
-    mat corr(x.n_elem, 1);
- mat out(x.n_elem, 2);
+  XPtr<funcpointer> xpfun = adressmyfuncs(rf_type);
+  funcpointer fun = *xpfun;
+  mat zero(x.n_elem, x.n_elem);
+  mat corr(x.n_elem, 1);
+  mat out(x.n_elem, 2);
   out.col(0) = xell;
   double outcorr ;
- double check;
+  double check;
  
   int  i = 0;
 
   check = 1;  // intial check value
 
-  while( absv(check) > test ){    
-                
-   vec z = shuffle(x);
-   
-   check = fun( xell, z );
+  while( absv(check) > test ){
+    vec z = shuffle(x);
+    check = fun( xell, z );
 
-   // update output 
-
-        out.col(1) =  z ; 
-       outcorr  =  check ; 
+   // update output
+    out.col(1) =  z ;
+    outcorr  =  check ; 
 
     // save intermediate results
       
     zero.col(i) = z;
     corr.row(i) = check;
 
+    i = i + 1 ;
 
-       i = i + 1 ;    
-
-
-   if( i==x.n_elem ){
-    mat tmat(x.n_elem, 1);
-    tmat.fill(test); 
-    vec diffs =  sqrt( square( corr - tmat ) );
-    uvec pick = find( diffs == min(diffs) ) ;
-
-    out.col(1) = zero.col( pick(0)  );  
-    mat res  =  corr.row( pick(0) ) ;
-        outcorr = as_scalar(res);
-
-	break;
-	  }
-
-
-       }
-  
+    if( i==x.n_elem ){
+      mat tmat(x.n_elem, 1);
+      tmat.fill(test);
+      vec diffs =  sqrt( square( corr - tmat ) );
+      uvec pick = find( diffs == min(diffs) ) ;
+      out.col(1) = zero.col( pick(0)  );
+      mat res  =  corr.row( pick(0) ) ;
+      outcorr = as_scalar(res);
+      break;
+    }
+  }
 
   return List::create(
 		      Named("vec") =  out,  
@@ -189,7 +177,8 @@ List findzerocorr(const vec&  xell, const vec& x, const double test, const std::
 			   
                            ); 
 
-    }
+
+}
 
 
 

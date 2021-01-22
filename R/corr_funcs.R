@@ -22,218 +22,201 @@
 
 # rank joint expectation
 
-rjm <- function(x,y, ties=c("min","average", "max"), order=1){
-
+rjm <- function(x,y, ties=c("min","average", "max"),
+                order=1)
+{
     md <- model.frame(~x+y)
-ties<- match.arg(ties)
-    
-rx <- rank(md[,1], ties=ties)
+    ties<- match.arg(ties)
+    rx <- rank(md[,1], ties=ties)
     ry <- rank(md[,2], ties=ties)
     prods <- (rx*ry)^order 
     res <- sum(prods)
     res  # note: since rank values > 0 always, all joint exps are > 0 always too. Thus, big values can always be managed with logarithm.
 
-   } 
+} 
 
 
 # spearman rank correlation with unbroken ties: unbroken ties shall be more precise about each element order. Average and "max" is also unbroken but makes the ranking index value higher.
 
-spcor <- function(x,y, ties=c("min","average", "max") ){ 
-
+spcor <- function(x,y, ties=c("min","average", "max") )
+{
     md <- model.frame(~x+y)
-
     ties<- match.arg(ties)
-    
-rx <- rank(md[,1], ties=ties)
+    rx <- rank(md[,1], ties=ties)
     ry <- rank(md[,2], ties=ties)
     res <- cor(rx,ry)
     res
+}
 
-   }
+
+rankcor <- function(X, y = NULL,
+                    ties=c("min","average", "max") )
+{
+    ties<- match.arg(ties)
+    if (!is.null(y) & is.numeric(y) & is.numeric(X) )
+        res <- spcor(X, y)
+    else
+    {
+        p <- dim(X)[2]
+        combos <- combn(p, 2)
+        J <- p*(p-1)/2
+        lowtri <- unlist(
+            lapply(1:J, function(j)
+            {
+                i <- combos[1, j]
+                k <- combos[2, j]
+                spcor(X[,i], X[,k])
+            }
+            )
+        )
+        res <- diag(nrow=p)
+        res[lower.tri(res)] <- lowtri
+        res[upper.tri(res)] <- t(res)[upper.tri(res)]
+    }
+    return(res)
+}
+
+
+#
+
+pearsoncor <- function(x,y)
+{
+    z <- model.frame(~x+y)
+    res <- cor(z[ ,1], z[ ,2])
+    return(res)
+}
+#
+
+momcor <- function(X, y = NULL )
+{
+    if (!is.null(y) & is.numeric(y) & is.numeric(X) )
+        res <- pearsoncor(X,y)
+    else
+    {
+        p <- dim(X)[2]
+        combos <- combn(p, 2)
+        J <- p*(p-1)/2
+        lowtri <- unlist(
+            lapply(1:J, function(j)
+            {
+                i <- combos[1, j]
+                k <- combos[2, j]
+                pearsoncor(X[,i], X[,k])
+            }
+            )
+        )
+        res <- diag(nrow=p)
+        res[lower.tri(res)] <- lowtri
+        res[upper.tri(res)] <- t(res)[upper.tri(res)]
+    }
+    return(res)
+}
+
 
 #  sample normal correlation score (van der waerden): ONLY FOR CONTINUOUS VARIABLES !!! CAN U USE BETA DIST FOR BERNOULLI IN ORDER TO GET SCORE ??
 
 # smoothen up binary covariate
 
-smoothen.binary <- function(bx){
-
+smoothen.binary <- function(bx)
+{
     N <- length(bx)
-    
- if (is.binary(bx))
-     bx <- bx + rtruncnorm(N, a=0, sd = 0.001)    # add zero-sum continuos noise
+    if (is.binary(bx))
+        bx <- bx + rtruncnorm(N, a=0, sd = 0.001)    # add zero-sum continuos noise
 
- return(bx)        
+    return(bx)        
 
-   }
-
-#
- smoothen.array <- function(X){
-
-  res <- apply(X, 2, function(x) smoothen.binary(x) )
- return(res)
- }
+}
 
 #
-w.rankZ <- function( x, y, ties=c("min","average", "max", "random"), smooth = FALSE){
+smoothen.array <- function(X)
+{
+    res <- apply(X, 2, function(x)
+        smoothen.binary(x)
+        )
+    return(res)
+}
 
-      ties<- match.arg(ties)  # should always be min ..
-    
+w.rankZ <- function(x, y,
+                    ties=c("min","average", "max", "random"),
+                    smooth = FALSE)
+{
+    ties<- match.arg(ties)  # should always be min ..
     md <- model.frame(~x+y)
     N <- dim(md)[1]
     if (smooth)
-  md <-  smoothen.array(md)   # smoothens non-continuos variables
-    
- rx <- rank(md[,1], ties=ties)
+        md <-  smoothen.array(md)   # smoothens non-continuos variables
+    rx <- rank(md[,1], ties=ties)
     ry <- rank(md[,2], ties=ties)
-
     ux <- rx/(N+1)  # 0-1 transformation
-  uy <- ry/(N+1)   # 0-1
-
-  zx <- qnorm(ux)  # mapped in normal standard space
+    uy <- ry/(N+1)   # 0-1
+    zx <- qnorm(ux)  # mapped in normal standard space
     zy <- qnorm(uy) # mapped in normal standard space
-
-        res <- cor(zx, zy) # sample normal score correlation
+    res <- cor(zx, zy) # sample normal score correlation
+    res
 
 }
 # transformation based on CL, maybe slower convergence but also covers discrete rvs.
 
-CL.trans <- function(x,y){
-
+CL.trans <- function(x,y)
+{
     md <- model.frame(~x+y)
     N <- dim(md)[1]
-
     zx <- (md[ ,1] - mean(md[ ,1], na.rm = T))/sd(md[ ,1], na.rm = T)
     zy <- (md[ ,2] - mean(md[ ,2], na.rm = T))/sd(md[ ,2], na.rm = T)
-    
- res <- cor(zx, zy) # sample normal score correlation
-  }
+    res <- cor(zx, zy) # sample normal score correlation
+    res
+}
 
 # smooth argument is deprecated !!!
-Zcor <- function(x, y, transf = c("central.limit", "weigted.rank"), ties=c("min","average", "max", "random"), smooth = FALSE ){
-
-  res <- switch( transf,
-
-                central.limit = CL.trans(x,y),
-                weighted.rank = w.rankZ(x,y,ties, smooth)
-                )
-   
-
+Zcor <- function(x, y,
+                 transf = c("central.limit", "weigted.rank"),
+                 ties=c("min","average", "max", "random"),
+                 smooth = FALSE )
+{
+    res <- switch(transf,
+                  central.limit = CL.trans(x,y),
+                  weighted.rank = w.rankZ(x,y,ties, smooth)
+                  )
     return(res)
-   }
+}
 
 
 #
 
-waerdencor <- function(X, y = NULL, transf = c("central.limit", "weigted.rank"), ties=c("min","average", "max", "random"), smooth = FALSE ){
-
-transf <- match.arg(transf)
-  ties<- match.arg(ties)
-
-  if (!is.null(y) & is.numeric(y) & is.numeric(X) )
-  res <- Zcor(X, y, transf, ties, smooth)
-    else {
-   
- p <- dim(X)[2]
-
+waerdencor <- function(X, y = NULL,
+                       transf = c("central.limit", "weigted.rank"),
+                       ties=c("min","average", "max", "random"),
+                       smooth = FALSE )
+{
+    transf <- match.arg(transf)
+    ties<- match.arg(ties)
+    if (!is.null(y) & is.numeric(y) & is.numeric(X) )
+        res <- Zcor(X, y, transf, ties, smooth)
+    else
+    {
+        p <- dim(X)[2]
         combos <- combn(p, 2)
-      J <- p*(p-1)/2
-
-    lowtri <- unlist( lapply(1:J, function(j){
-
-        i <- combos[1, j]
-          k <- combos[2, j]
-
-        Zcor(X[,i], X[,k], transf, ties, smooth)
-          
-  }
-           )  )
-
-    res <- diag(nrow=p)
-    res[lower.tri(res)] <- lowtri 
-    res[upper.tri(res)] <- t(res)[upper.tri(res)]
-
-
-        }
-
+        J <- p*(p-1)/2
+        lowtri <- unlist(
+            lapply(1:J, function(j)
+            {
+                i <- combos[1, j]
+                k <- combos[2, j]
+                Zcor(X[,i], X[,k], transf, ties, smooth)
+            }
+            )
+        )
+        res <- diag(nrow=p)
+        res[lower.tri(res)] <- lowtri
+        res[upper.tri(res)] <- t(res)[upper.tri(res)]
+    }
     return(res)
-   }
+}
 
 
 
-   # 
-rankcor <- function(X, y = NULL, ties=c("min","average", "max") ){
-
-     ties<- match.arg(ties)
-
-  if (!is.null(y) & is.numeric(y) & is.numeric(X) )
-  res <- spcor(X, y)
-    else {
     
-  p <- dim(X)[2]
 
-        combos <- combn(p, 2)
-      J <- p*(p-1)/2
-
-    lowtri <- unlist( lapply(1:J, function(j){
-
-        i <- combos[1, j]
-          k <- combos[2, j]
-
-        spcor(X[,i], X[,k])
-          
-  }
-           )  )
-
-    res <- diag(nrow=p)
-    res[lower.tri(res)] <- lowtri 
-    res[upper.tri(res)] <- t(res)[upper.tri(res)]
-
-        }
-    res
-   }
-
-
-#
-
-pearsoncor <- function(x,y){
-
-         z <- model.frame(~x+y)
-        res <- cor(z[ ,1], z[ ,2])
-     return(res)
-
-   }
-#
-
-momcor <- function(X, y = NULL ){
-
-
-  if (!is.null(y) & is.numeric(y) & is.numeric(X) )
-
-      res <- pearsoncor(X,y)
-       else {
-    
-  p <- dim(X)[2]
-
-        combos <- combn(p, 2)
-      J <- p*(p-1)/2
-
-    lowtri <- unlist( lapply(1:J, function(j){
-
-        i <- combos[1, j]
-          k <- combos[2, j]
-
-        pearsoncor(X[,i], X[,k])
-          
-  }
-           )  )
-
-    res <- diag(nrow=p)
-    res[lower.tri(res)] <- lowtri 
-    res[upper.tri(res)] <- t(res)[upper.tri(res)]
-
-        }
-    res
-   }
 
 
 

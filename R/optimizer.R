@@ -25,60 +25,64 @@
 # safeguard value against f/fprime explosion, in case fprime --> zero.
 
 
- newtrap.one <- function(fdist, fprime, start, ..., tol=0.01, maxit=50, safecheck = NULL){ # safecheck shall output an attribute break.loop and modified (boolean)
-
-     adjusted <- FALSE
+newtrap.one <- function(fdist, fprime, start, ..., tol=0.01,
+                        maxit=50, safecheck = NULL)
+{ # safecheck shall output an attribute break.loop and modified (boolean)
+    adjusted <- FALSE
     i <- 0 # to exit main loop
-     j <- 0 # to exit safecheck loop
-  x <- start
-      
+    j <- 0 # to exit safecheck loop
+    x <- start
     out <- fdist(x, ...) # must be scalar
-     
-   while(  abs( out ) > tol  ){  ### LOOP
+    while(  abs( out ) > tol  )
+    {  
+        den <- fprime(x, ...)  #  must be scalar
 
- den <- fprime(x, ...)  #  must be scalar
-
-############# safeguarding step : try to avoid bottlenecks ####################       
-       if ( abs( out/den ) >= 1e5 ) {
-   x <- x - 2*out
-          i <- i + 1
-   if (i > maxit) {
-       warning("Search could not escape bottleneck: procedure has failed")
-       break
-   }
-    next
-       }
+############# safeguarding step : try to avoid bottlenecks ####################
+        if ( abs( out/den ) >= 1e5 )
+        {
+            x <- x - 2*out
+            i <- i + 1
+            if (i > maxit)
+            {
+                warning("Search could not escape bottleneck: procedure has failed")
+                break
+            }
+            next
+        }
 #############################################
+
+        x <- x - ( out/den )  # update x
        
-          x <- x - ( out/den )  # update x
-       
-############# safeguarding step : try to avoid impossible values  ####################              
-   if ( !is.null(safecheck) ) {
-       x <- safecheck(x, ...)  # controls that some necessay conditions for x are fulfilled in order for newtrap to proceed safely ....    
-     if ( attr(x, "modified", T) ) { # has safecheck produced a change in x ? if yes proceed with further booleans ...
-       j <- j + 1
-     #  if ( j > 2 | attr(x, "break.loop", T) ){ # if u have to safecheck more than 3 times module is probably run into loop: just exit.
-if ( attr(x, "break.loop", T) ){
-       adjusted <- TRUE
-           break
-       }  }   }
+############# safeguarding step : try to avoid impossible values  ####################
+        if ( !is.null(safecheck) )
+        {
+            x <- safecheck(x, ...)  # controls that some necessay conditions for x are fulfilled in order for newtrap to proceed safely ....
+            if ( attr(x, "modified", T) )
+            {
+                                        # has safecheck produced a change in x ? if yes proceed with further booleans ...
+                j <- j + 1
+                                        #  if ( j > 2 | attr(x, "break.loop", T) ){ # if u have to safecheck more than 3 times module is probably run into loop: just exit.
+                if ( attr(x, "break.loop", T) )
+                {
+                    adjusted <- TRUE
+                    break
+                }
+            }
+        }
 #############################################
-       
-       out <-  fdist(x, ...)
+        out <-  fdist(x, ...)
+        i <- i + 1
+        if (i > maxit)
+        {
+            warning(paste("no zero found after max iteration"))
+            break
+        }
 
-       i <- i + 1
-
-       if (i > maxit) {
-           warning(paste("no zero found after max iteration"))
-           break
-       }
-       
-      }    ## END LOOP
-  attributes(x)$adjusted <- adjusted  # flag if value exit on safecheck or not
-
-     if (adjusted)
-         warning("newtrap module: solution needed be adjusted to escape loop")
-     return(list( value = x, iter = i ))  
+    }
+    attributes(x)$adjusted <- adjusted  # flag if value exit on safecheck or not
+    if (adjusted)
+        warning("newtrap module: solution needed be adjusted to escape loop")
+    return(list( value = x, iter = i ))  
 }
 
 
@@ -86,63 +90,60 @@ if ( attr(x, "break.loop", T) ){
 
 #
 
-newtrap.multi <- function( fdist, fprime, start, ..., tol=0.01, maxit=50, safecheck = NULL){  # f must return a vector while fprime a square matrix 
+newtrap.multi <- function( fdist, fprime, start, ..., tol=0.01,
+                          maxit=50, safecheck = NULL)
+{
+                                        # f must return a vector while fprime a square matrix 
 
-      adjusted <- FALSE
+    adjusted <- FALSE
     k <- length(start)
-  zero <- matrix(rep(tol, k), nrow=1)
-
-  x <- matrix(start, nrow=1)
-
+    zero <- matrix(rep(tol, k), nrow=1)
+    x <- matrix(start, nrow=1)
     i <- 0
     j <- 0
+    out <- matrix( fdist(x, ...), nrow=1) # make horizontal
+    den <-  fprime(x, ...)   # is square matrix (Hessian, or Jacobian)
+    while( any( abs( out ) > zero )  )
+    {
+        den <- fprime(x, ...)
+        x <- x - out%*%solve(den)   # update x
 
-    out <- matrix( fdist(x, ...), nrow=1) # make horizontal  
+        if ( !is.null(safecheck) )
+        {
+            x <- safecheck(x, ...)  # controls that some necessay conditions for x are fulfilled in order for newtrap to proceed safely ....
+            j <- j + 1
+            if ( j > 2 | attr(x, "break.loop", T)) # if u have to safecheck 10 times module is probably run into loop: just exit.
+                adjusted <- TRUE
+            break
+        }
 
- den <-  fprime(x, ...)   # is square matrix (Hessian, or Jacobian)
-    
-   while( any( abs( out ) > zero )  ){
+        out <- matrix( fdist(x, ...), nrow = 1)
+        i <- i + 1
+        if(i > maxit)
+        {
+            warning(paste("no zero found after max iteration"))
+            break
+        }
 
-   den <- fprime(x, ...)  
-
-          x <- x - out%*%solve(den)   # update x
-       
-    if ( !is.null(safecheck) ) {
-       x <- safecheck(x, ...)  # controls that some necessay conditions for x are fulfilled in order for newtrap to proceed safely ....
-      j <- j + 1
-       if ( j > 2 | attr(x, "break.loop", T)) # if u have to safecheck 10 times module is probably run into loop: just exit.
-             adjusted <- TRUE
-           break
-       }
-          
-       out <- matrix( fdist(x, ...), nrow = 1)
-
-       i <- i + 1
-
-       if(i > maxit){
-           warning(paste("no zero found after max iteration"))
-           break   }
-       
-      }
-
-     if (adjusted)
-         warning("newtrap module: adjusted solution to escape loop")
-    
-   return( list(value= as.numeric(x), iter= i) )
-   }
+    }
+    if (adjusted)
+        warning("newtrap module: adjusted solution to escape loop")
+    return( list(value= as.numeric(x), iter= i) )
+}
 
                                         
 #
 
-newtrap <- function(fdist, fprime, start, ..., tol=0.01, maxit=50){
-
-  if (length(start) > 1 )
-      
-out <- newtrap.multi(fdist, fprime, start, ..., tol=tol, maxit=maxit) # TODO(me) : must also safeguard against singular matrixes
-
-  else
-      
-      out <- newtrap.one(fdist, fprime, start, ..., tol=tol, maxit=maxit)
-
+newtrap <- function(fdist, fprime, start, ..., tol=0.01, maxit=50)
+{
+    if (length(start) > 1 )
+        out <- newtrap.multi(fdist,
+                             fprime,
+                             start, ...,
+                             tol=tol,
+                             maxit=maxit
+                             ) # TODO(me) : must also safeguard against singular matrixes
+    else
+        out <- newtrap.one(fdist, fprime, start, ..., tol=tol, maxit=maxit)
     return(out)
-   }
+}

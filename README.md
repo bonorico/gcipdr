@@ -1,5 +1,5 @@
 # gcipdr
-Gaussian Copula (based) Individual Person Data Reproduction
+Gaussian Copula Individual Person Data Reproduction
 
 # Installation instructions in R (follow in order):
 
@@ -28,14 +28,13 @@ help("gcipdr")
 ```
 # ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~  ~+~+~+~+~+~+~+~ ~+~+~+~+~+~+~+~   
 
-# Package Description (from DESCRIPTION file)
+# Package Description
 
-The proposed Gaussian Copula technique generates (unavailable) IPD from simple IPD summaries (like empirical marginal moments and correlation matrix). Ultimate focus is recovery of IPD inferences from the generated data.  Applications are envisioned in fields like Statistical Disclosure Control, Distributed Computing (within infrastructures like DataShield -- see https://cran.datashield.org/), and, provided the required IPD summaries can be retrieved, Research Synthesis (ideally like meta-analysis) and Reproduction.
+The proposed Gaussian Copula technique generates pseudodata replacing IPD, using simple summaries, like IPD empirical marginal moments and correlation matrix, as only input data. In contexts where IPD is not available, pseudodata is a mean to compute approximate IPD inferences. The approach has applications in statistical disclosure control, distributed computing (e.g. see DataShield -- see https://cran.datashield.org/), and, ideally research synthesis or reproduction.
 
 # Further Details
 
-This package is a beta version and extensive editing, documenting, and
-amelioration shall be expected in the future.
+This package (documentation) is yet to receive furhter editing.
 
 
 # HOW TO CITE
