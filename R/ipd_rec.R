@@ -39,7 +39,8 @@ create.dm.formula <- function(names)
     K <- length(names) # number of variables
     dmfrm <- paste(names, "+") # design matrix formula
     dmfrm[K] <- substr(dmfrm[K], 1, nchar(names[K]) ) # drop last plus sign (under convention that last var is not outcome ..., but it may be if K == 2, ADJUST later)
-    dmformula <- as.formula(c("~", dmfrm) )
+    # dmformula <- as.formula(c("~", dmfrm) )  # fixing late deprecation
+    dmformula <- as.formula(paste0("~", dmfrm))
     attributes(dmformula)$formula.blocks <- dmfrm
     return(dmformula)
 }
